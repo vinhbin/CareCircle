@@ -22,8 +22,8 @@ export function Nav() {
   const pathname = usePathname()
   const router = useRouter()
 
-  // Hide nav on the user selection page
-  if (pathname === '/') return null
+  // Hide nav on landing and user selection pages
+  if (pathname === '/' || pathname === '/select') return null
 
   return (
     <header className="bg-white border-b border-rose-100 px-6 py-3 flex items-center justify-between shadow-sm">
@@ -56,7 +56,7 @@ export function Nav() {
             </div>
             <span className="text-sm text-zinc-600">{user.name.split(' ')[0]}</span>
             <button
-              onClick={() => { setUser(null); router.push('/') }}
+              onClick={() => { setUser(null); router.push('/select') }}
               className="text-xs text-zinc-400 hover:text-rose-600 cursor-pointer"
             >
               Switch
