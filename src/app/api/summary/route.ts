@@ -64,7 +64,7 @@ export async function POST() {
   }
 
   try {
-    const result = await generateWeeklySummary({
+    const raw = await generateWeeklySummary({
       patientName: patient.name,
       age: patient.age,
       diagnosis: patient.diagnosis,
@@ -74,6 +74,12 @@ export async function POST() {
       completedTasks,
       totalTasks
     })
+    const result = {
+      ...raw,
+      actionItems: Array.isArray(raw.actionItems)
+        ? (raw.actionItems as string[]).join('\n')
+        : raw.actionItems,
+    }
 
     await supabase.from('ai_summaries').insert({
       patient_id: 1,

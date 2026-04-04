@@ -21,7 +21,7 @@ export async function POST(
   }
 
   try {
-    const result = await translateNote(
+    const raw = await translateNote(
       note.raw_notes,
       patient.name,
       patient.age,
@@ -30,6 +30,12 @@ export async function POST(
       note.visit_date,
       language
     )
+    const result = {
+      ...raw,
+      actionItems: Array.isArray(raw.actionItems)
+        ? (raw.actionItems as string[]).join('\n')
+        : raw.actionItems,
+    }
 
     // Only cache English translations to DB; other languages are generated on demand
     if (language === 'English') {
