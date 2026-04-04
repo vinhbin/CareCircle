@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import './globals.css'
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: 'CareCircle',
@@ -17,7 +21,7 @@ const navLinks = [
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className={cn("h-full", "font-sans", geist.variable)}>
       <body className="min-h-full flex flex-col bg-rose-50">
         <header className="bg-white border-b border-rose-100 px-6 py-3 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-2">
