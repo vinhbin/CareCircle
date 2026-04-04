@@ -1,3 +1,8 @@
+// AI WEEKLY SUMMARY
+// GET  /api/summary — Returns the latest saved summary (or null if none exists)
+// POST /api/summary — Gathers meds, notes, tasks context → sends to Gemini → saves result to ai_summaries
+// Falls back to hardcoded summary if Gemini fails
+
 import { supabase } from '@/lib/supabase'
 import { generateWeeklySummary } from '@/lib/gemini'
 

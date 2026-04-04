@@ -4,7 +4,7 @@
 
 ---
 
-## Backend (Person C) — COMPLETE ✅
+## Backend V1 (Person C) — COMPLETE ✅
 
 | Endpoint | Method | Status | Notes |
 |---|---|---|---|
@@ -27,21 +27,46 @@
 
 ---
 
-## Frontend — Person A
+## V2 Backend (Person C) — COMPLETE ✅
 
-| Page | Route | Status | Notes |
+### New DB Tables
+- [x] `medication_logs` — dose tracking (who gave what, when)
+- [x] `activity_log` — action attribution (who did what, when)
+- [x] RLS disabled on both new tables
+
+### New Shared Libraries
+- [x] `src/lib/user-context.tsx` — React context for selected family member
+- [x] `src/lib/languages.ts` — shared 10-language constant
+
+### New/Modified API Routes — All Verified ✅
+
+| Endpoint | Method | Status | Notes |
 |---|---|---|---|
-| Dashboard | `/` | 🔲 Scaffold only | Needs PatientCard, FamilyAvatars, TaskSummary, MedCountBadge |
-| Medication Tracker | `/medications` | 🔲 Scaffold only | Needs styled Table with active/inactive badges |
+| `/api/family/members` | POST | ✅ Done | Add new family member |
+| `/api/activity` | GET, POST | ✅ Done | Activity feed + log actions |
+| `/api/medications/log` | GET, POST | ✅ Done | Dose tracking with live counts |
+| `/api/medications` | POST | ✅ Done | Create medication + activity log |
+| `/api/medications` | PATCH | ✅ Done | Update any field including active + activity log |
+| `/api/medications` | DELETE | ✅ Done | Remove medication + activity log |
+| `/api/tasks` | POST | ✅ Done | Create task + activity log |
+| `/api/tasks` | PATCH | ✅ Done | Full field update + activity log |
+| `/api/tasks` | DELETE | ✅ Done | Delete task + activity log |
+| `/api/notes` | POST | ✅ Done | Add doctor note + activity log |
+| `/api/notes/scan` | POST | ✅ Done | Photo → Gemini OCR → extracted text |
+| `/api/summary/translate` | POST | ✅ Done | Translate summary via Gemini |
+
+### New Gemini Functions
+- [x] `extractTextFromImage()` — multimodal OCR for paper note scanning
+- [x] `translateText()` — plain text translation
 
 ---
 
-## Frontend — Person B
+## V2 Frontend — Route Changes
 
-| Page | Route | Status | Notes |
+| Page | Old Route | New Route | Status |
 |---|---|---|---|
-| Doctor Notes | `/notes` | 🔲 Scaffold only | API wired up, translate works. Needs NoteCard, TranslationPanel styling |
-| AI Weekly Summary | `/summary` | 🔲 Scaffold only | API wired up, generate works. Needs SummaryCard, WeekBadge, EmptyState |
+| User Selection | — | `/` | ✅ Done | Circle avatars, "Who's checking in?", Add Member dialog |
+| Dashboard | `/` | `/dashboard` | ✅ Scaffold | APIs wired, needs Person A components |
 
 ---
 
@@ -49,8 +74,12 @@
 
 | Item | Status | Notes |
 |---|---|---|
-| Layout + Nav | 🔲 TODO | Top nav with logo, patient name, 5 nav links |
-| Community Resources | 🔲 TODO | Static page at `/community` — no API needed |
+| Layout + Nav | ✅ Done | Logo, patient name, 5 nav links, active highlight, user avatar + "Switch" link |
+| User Selection Page | ✅ Done | Circle avatars, Add Member dialog, redirects to /dashboard |
+| User Context | ✅ Done | React context + localStorage persistence |
+| Community Resources | ✅ Done | Static page at `/community` — broken links fixed |
+| shadcn components | ✅ Done | card, badge, button, dialog, table, tabs, avatar, progress, skeleton, input, textarea, select, label |
+| Doc comments | ✅ Done | All API routes, lib files, pages, and nav have doc comments |
 | Color theme | 🔲 TODO | Rose/amber tones, not clinical blue |
 | Loading states | 🔲 TODO | Skeletons, spinners |
 | Responsive check | 🔲 TODO | All pages at 1440px |
@@ -58,10 +87,29 @@
 
 ---
 
+## Frontend — Person A
+
+| Page | Route | Status | Notes |
+|---|---|---|---|
+| Dashboard | `/dashboard` | 🔲 Scaffold | APIs wired. Build: PatientCard, FamilyAvatars, TaskList (CRUD dialogs), MedCountBadge, **ActivityFeed** |
+| Medication Tracker | `/medications` | 🔲 Scaffold | APIs wired. Build: **Checklist cards** with live dose counts, progress bar, add/edit/delete dialogs |
+
+---
+
+## Frontend — Person B
+
+| Page | Route | Status | Notes |
+|---|---|---|---|
+| Doctor Notes | `/notes` | 🔲 Partial | Translate works. Build: NoteCard styling, TranslationPanel, **"Add Note" dialog with Manual + Scan Photo tabs** |
+| AI Weekly Summary | `/summary` | 🔲 Partial | Generate works. Build: SummaryCard, WeekBadge, EmptyState, **language selector + translate** |
+
+---
+
 ## Demo Readiness
 
+### V1 Checklist
 - [ ] Dashboard loads patient card + 3 family avatars + task list
-- [ ] Medication table shows 4 active meds with real dosages
+- [ ] Medication tracker shows 4 active meds with real dosages
 - [ ] Doctor notes feed shows 3 notes with visible jargon
 - [ ] "Explain in Tiếng Việt" → real Vietnamese translation in <8s
 - [ ] Language selector switches between 10 languages
@@ -70,3 +118,14 @@
 - [ ] All pages load error-free at 1440px
 - [ ] Deployed Vercel URL works end-to-end
 - [ ] Demo script run 3x without error
+
+### V2 Checklist
+- [ ] User selection page shows 3 avatars + Add button
+- [ ] Selecting user → dashboard shows "Logged in as [Name]"
+- [ ] Task CRUD: create, edit, toggle complete, delete
+- [ ] Medication checklist with live dose counts (2/2 ✓)
+- [ ] "Confirm Given" on medication → logs who + when
+- [ ] Photo scan: upload image → text extracted by Gemini
+- [ ] Add Note from scan → note appears, ready to translate
+- [ ] Summary translatable to Vietnamese/Spanish/etc.
+- [ ] Activity feed shows attributed actions on dashboard

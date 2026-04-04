@@ -48,6 +48,317 @@ Family: Minh (son, care coordinator, first-gen American), Lisa (daughter-in-law)
 
 ---
 
+## V2 Features (Added 2026-04-04)
+
+> **These features build ON TOP of everything below.** Original plan is unchanged.
+> Person C pushes all V2 backend + route changes before A and B start building UI.
+
+### What changed from V1
+
+| Original | V2 |
+|---|---|
+| Dashboard at `/` | User selection at `/`, dashboard moves to `/dashboard` |
+| Read-only medications | Full CRUD + checklist with live dose counts |
+| Read-only tasks | Full CRUD with activity attribution |
+| Read-only doctor notes | Add notes manually OR scan a photo of a paper note |
+| No user identity | Family member selection (no auth, stored in browser) |
+| No activity tracking | Every action logged with who + when |
+| Summary in English only | Summary translatable to 10 languages |
+| Gemini 2.0 Flash | Gemini 2.5 Flash (2.0 deprecated) |
+
+---
+
+### V2-A: User Selection (No Auth)
+
+**Problem:** The original plan hardcoded everything with no sense of "who is using the app." For the demo, we need actions attributed to specific family members.
+
+**Solution:** A user selection screen at `/` — circular avatar cards (Google account picker style) for each family member. Tap one → stored in React context + localStorage → redirected to `/dashboard`.
+
+**Route changes:**
+- `/` → User selection landing page
+- `/dashboard` → Dashboard (moved from `/`)
+
+**New files:**
+| File | Purpose |
+|---|---|
+| `src/lib/user-context.tsx` | React context: `{ user, setUser }`, reads from localStorage |
+| `src/app/page.tsx` | Rewritten as user selection (circle avatars + "Add Member" button) |
+| `src/app/dashboard/page.tsx` | Dashboard (moved from old `/`) |
+| `src/app/api/family/members/route.ts` | POST to add a new family member |
+
+**Nav changes (`src/app/layout.tsx`):**
+- Shows "Logged in as [Name]" + avatar in top nav
+- "Switch" link → returns to `/`
+
+**How user identity flows:**
+1. User selects their profile → `family_member_id` stored in context
+2. Every mutating API call includes `family_member_id`
+3. Backend logs the action to `activity_log` table
+
+---
+
+### V2-B: Activity Logging
+
+**New DB tables** (run in Supabase SQL Editor):
+
+```sql
+-- Tracks every action: who did what, when
+create table activity_log (
+  id serial primary key,
+  patient_id int references patients(id),
+  family_member_id int references family_members(id),
+  action_type text not null,
+  description text not null,
+  created_at timestamptz default now()
+);
+
+-- Tracks each medication dose: who gave it, when
+create table medication_logs (
+  id serial primary key,
+  medication_id int references medications(id),
+  family_member_id int references family_members(id),
+  action text not null default 'administered',
+  logged_at timestamptz default now()
+);
+```
+
+> **Remember:** Disable RLS on both new tables.
+
+**New API routes:**
+
+| Route | Methods | Purpose |
+|---|---|---|
+| `/api/activity` | GET, POST | Fetch recent activity feed; log a new action |
+| `/api/medications/log` | GET, POST | Fetch dose logs for today; confirm a dose was given |
+
+**Activity types logged:**
+
+| Action | Example log entry |
+|---|---|
+| Task completed | "Kevin marked 'Set up glucose log' as completed" |
+| Task created | "Minh added task 'Schedule follow-up'" |
+| Medication confirmed | "Kevin confirmed Metformin at 8:32 AM" |
+| Note added | "Minh added doctor note from Dr. Tran" |
+| Note scanned | "Lisa scanned a discharge note from Dr. Park" |
+| Summary generated | "Minh generated this week's summary" |
+
+---
+
+### V2-C: Full CRUD — Tasks
+
+**Changes to `src/app/api/tasks/route.ts`** (currently has GET + status-only PATCH):
+
+| Method | What's new |
+|---|---|
+| POST | `{ title, description?, assigned_to_id, due_date, family_member_id }` → creates task + logs to activity_log |
+| PATCH | Expanded: accepts `{ id, family_member_id, title?, description?, assigned_to_id?, due_date?, status? }` → logs status changes |
+| DELETE | `?id=N` query param → deletes task + logs to activity_log |
+
+**Dashboard UI (`src/app/dashboard/page.tsx`):**
+- PatientCard, FamilyAvatars, MedCountBadge
+- Task list with: "Add Task" button → Dialog, toggle complete, Edit, Delete
+- **Activity feed** at bottom — recent actions from `/api/activity`
+
+---
+
+### V2-D: Full CRUD — Medications + Dose Tracking
+
+**Changes to `src/app/api/medications/route.ts`** (currently GET only):
+
+| Method | What's new |
+|---|---|
+| POST | `{ name, dosage, frequency, purpose, administered_by, start_date, family_member_id }` → creates med + logs |
+| PATCH | `{ id, family_member_id, ...any fields including active }` → updates med + logs |
+| DELETE | `?id=N` query param → deletes med + logs |
+
+**New: `src/app/api/medications/log/route.ts`**
+- GET `?date=YYYY-MM-DD` → all dose logs for that day with who + when
+- POST `{ medication_id, family_member_id }` → confirms dose was given
+
+**Medications UI (`src/app/medications/page.tsx`) — Checklist style:**
+- Each med = a **checklist card** (not a table row):
+  - Checkbox to mark as given → POST to `/api/medications/log`
+  - Med name, dosage, frequency, purpose
+  - **Live count badge**: "2/3 doses today" (today's logs vs expected frequency)
+  - Last given: "Kevin, 8:32 AM"
+  - Edit button, Delete button, active toggle
+- **Top of page: progress bar** — "12 of 14 doses given today" across all meds
+- "Add Medication" button → Dialog
+
+---
+
+### V2-E: Doctor Notes — Add Note + Photo Scan
+
+**Changes to `src/app/api/notes/route.ts`** (currently GET only):
+- POST: `{ doctor_name, specialty, visit_date, raw_notes, family_member_id }` → creates note + logs
+
+**New: `src/app/api/notes/scan/route.ts`**
+- POST: `{ image: string (base64), mimeType: string }`
+- Sends image to Gemini 2.5 Flash (multimodal) → extracts text
+- Returns `{ extractedText: string }` for user to review before saving
+
+**New Gemini function (`src/lib/gemini.ts`):**
+```typescript
+export async function extractTextFromImage(base64Data: string, mimeType: string): Promise<string>
+// Uses model.generateContent([textPart, { inlineData: { mimeType, data } }])
+// Prompt: "Extract all text from this medical document exactly as written."
+```
+
+**Notes UI (`src/app/notes/page.tsx`) — add to existing:**
+- "Add Doctor Note" button → Dialog with shadcn Tabs:
+  - **Manual Entry** tab: Input (doctor, specialty, date), Textarea (raw_notes)
+  - **Scan Photo** tab: file input with `accept="image/*" capture="environment"` (camera on mobile), image preview, "Extract Text" button → calls scan API → populates raw_notes Textarea for review/edit
+- After save: prepend to notes list, close dialog
+
+**Demo story:** *"Minh takes a photo of Bà Lan's discharge paper. CareCircle reads it and explains it to the family — in Vietnamese."*
+
+---
+
+### V2-F: Summary Translation
+
+**New: `src/app/api/summary/translate/route.ts`**
+- POST: `{ text: string, language: string }` → calls Gemini to translate → returns `{ translatedText: string }`
+
+**New Gemini function (`src/lib/gemini.ts`):**
+```typescript
+export async function translateText(text: string, language: string): Promise<string>
+// Simple translation prompt, returns plain text
+```
+
+**Summary UI (`src/app/summary/page.tsx`) — add to existing:**
+- Language selector (same 10 languages as notes page)
+- "Translate" button → shows translated summary in colored panel below original
+
+---
+
+### V2 Project Structure (additions only)
+
+```
+src/
+├── app/
+│   ├── page.tsx                              # NEW: User selection landing
+│   ├── dashboard/page.tsx                    # MOVED: Dashboard (was /)
+│   └── api/
+│       ├── family/members/route.ts           # NEW: POST add family member
+│       ├── activity/route.ts                 # NEW: GET/POST activity log
+│       ├── medications/log/route.ts          # NEW: GET/POST dose tracking
+│       ├── notes/scan/route.ts               # NEW: POST photo → text (Gemini)
+│       └── summary/translate/route.ts        # NEW: POST text translation
+└── lib/
+    ├── user-context.tsx                      # NEW: React context for active user
+    └── languages.ts                          # NEW: Shared 10-language constant
+```
+
+### V2 Data Model (additions only)
+
+```mermaid
+erDiagram
+    MEDICATIONS ||--o{ MEDICATION_LOGS : "tracked by"
+    FAMILY_MEMBERS ||--o{ MEDICATION_LOGS : "administered by"
+    FAMILY_MEMBERS ||--o{ ACTIVITY_LOG : "performed by"
+    PATIENTS ||--o{ ACTIVITY_LOG : has
+
+    MEDICATION_LOGS {
+        int id PK
+        int medication_id FK
+        int family_member_id FK
+        string action
+        timestamptz logged_at
+    }
+
+    ACTIVITY_LOG {
+        int id PK
+        int patient_id FK
+        int family_member_id FK
+        string action_type
+        string description
+        timestamptz created_at
+    }
+```
+
+### V2 User Flows
+
+#### User Selection → Dashboard
+```mermaid
+sequenceDiagram
+    actor User as Family Member
+    participant UI as Landing Page (/)
+    participant API as API Routes
+    participant DB as Supabase
+
+    User->>UI: Open app
+    UI->>API: GET /api/family (loads members)
+    API->>DB: SELECT family_members
+    DB-->>API: Minh, Lisa, Kevin
+    API-->>UI: Member list
+    UI-->>User: Circle avatars — "Who's checking in?"
+    User->>UI: Taps "Kevin"
+    UI->>UI: Store family_member_id in context + localStorage
+    UI->>User: Redirect to /dashboard
+```
+
+#### Scan Paper Note → AI Translation
+```mermaid
+sequenceDiagram
+    actor User as Kevin
+    participant UI as Notes Page
+    participant API as API Routes
+    participant Gemini as Gemini API
+    participant DB as Supabase
+
+    User->>UI: Click "Add Doctor Note" → Scan Photo tab
+    User->>UI: Take photo of paper discharge note
+    UI->>API: POST /api/notes/scan { image (base64), mimeType }
+    API->>Gemini: Send image + "Extract all text"
+    Gemini-->>API: Extracted medical text
+    API-->>UI: { extractedText }
+    UI-->>User: Text appears in editable textarea for review
+    User->>UI: Fills in doctor name, date → clicks Save
+    UI->>API: POST /api/notes { doctor_name, raw_notes, family_member_id }
+    API->>DB: INSERT doctor_notes + activity_log
+    UI-->>User: Note appears in feed — ready to translate
+```
+
+#### Medication Dose Confirmation
+```mermaid
+sequenceDiagram
+    actor User as Kevin
+    participant UI as Medications Page
+    participant API as API Routes
+    participant DB as Supabase
+
+    User->>UI: Checks "Metformin" checkbox
+    UI->>API: POST /api/medications/log { medication_id: 1, family_member_id: 3 }
+    API->>DB: INSERT medication_logs + activity_log
+    DB-->>API: Updated count
+    API-->>UI: { todayCount: 2, expectedCount: 2 }
+    UI-->>User: Badge updates "2/2 doses today ✓" — "Kevin, 8:32 AM"
+```
+
+### V2 Demo Script Addition
+
+> Insert after step 2 in the original demo script:
+
+2b. *"When Kevin opens CareCircle, he picks his name. Everything he does — confirming a medication, completing a task — is logged so the whole family can see."* → show user selection → tap Kevin → show dashboard with activity feed
+
+4b. *"Minh took a photo of the paper note from the doctor's office."* → show Scan Photo tab → upload image → text extracted → click Explain in Tiếng Việt → Vietnamese translation appears
+
+6b. *"The weekly summary? Translate it too."* → show language selector on summary → translate to Vietnamese
+
+### V2 Winning Criteria Additions
+
+- [ ] User selection page shows 3 family member avatars + Add button
+- [ ] Selecting a user → dashboard shows "Logged in as [Name]"
+- [ ] Creating a task logs "Minh added task '...'" in activity feed
+- [ ] Medication checklist shows live dose counts (2/2 ✓)
+- [ ] "Confirm Given" on medication → logs who + when
+- [ ] Photo scan: upload image → text extracted by Gemini
+- [ ] Add Note from scan → note appears in feed, ready to translate
+- [ ] Summary translatable to Vietnamese/Spanish/etc.
+- [ ] Activity feed shows attributed actions on dashboard
+
+---
+
 ## Key Differentiators vs. CareVillage
 
 | Feature | CareVillage | CareCircle |

@@ -12,19 +12,7 @@
 // State: track which notes are loading and which have been translated this session
 
 import { useState, useEffect } from 'react'
-
-const LANGUAGES = [
-  { code: 'English',    label: 'English' },
-  { code: 'Tiếng Việt', label: 'Tiếng Việt' },
-  { code: 'Español',    label: 'Español' },
-  { code: '中文',        label: '中文' },
-  { code: '한국어',      label: '한국어' },
-  { code: 'Português',  label: 'Português' },
-  { code: 'Tagalog',    label: 'Tagalog' },
-  { code: 'हिन्दी',     label: 'हिन्दी' },
-  { code: 'العربية',    label: 'العربية' },
-  { code: 'Français',   label: 'Français' },
-]
+import { LANGUAGES } from '@/lib/languages'
 
 type Translation = { translation: string; actionItems: string; language?: string }
 // Raw shape returned by Supabase (snake_case column names)

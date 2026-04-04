@@ -1,3 +1,9 @@
+// GEMINI AI — all AI functions using Google Gemini 2.5 Flash
+// translateNote()        — medical jargon → plain language in any of 10 languages
+// generateWeeklySummary() — narrative weekly care digest from meds/notes/tasks context
+// extractTextFromImage()  — multimodal OCR: photo of paper note → extracted text
+// translateText()         — plain text translation for summaries
+
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
@@ -62,4 +68,19 @@ Respond ONLY as valid JSON with no markdown, no code fences, no extra text: { "s
 
   const result = await model.generateContent(prompt)
   return parseJSON(result.response.text()) as { summaryText: string; watchFor: string; actionItems: string }
+}
+
+export async function extractTextFromImage(base64Data: string, mimeType: string): Promise<string> {
+  const result = await model.generateContent([
+    { text: 'Extract all text from this medical document exactly as written. Return only the extracted text, no commentary or formatting.' },
+    { inlineData: { mimeType, data: base64Data } },
+  ])
+  return result.response.text()
+}
+
+export async function translateText(text: string, language: string): Promise<string> {
+  const result = await model.generateContent(
+    `Translate the following text into ${language}. Keep the same tone and structure. Return only the translation, no commentary.\n\n${text}`
+  )
+  return result.response.text()
 }

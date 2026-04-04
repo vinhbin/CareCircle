@@ -1,8 +1,12 @@
+// ROOT LAYOUT — wraps all pages with UserProvider (context) and Nav
+// Server component — metadata lives here, client logic in Nav and UserProvider
+
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import './globals.css'
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { UserProvider } from '@/lib/user-context'
+import { Nav } from '@/components/nav'
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -11,36 +15,14 @@ export const metadata: Metadata = {
   description: 'Family care coordination for serious illness'
 }
 
-const navLinks = [
-  { href: '/', label: 'Dashboard' },
-  { href: '/medications', label: 'Medications' },
-  { href: '/notes', label: 'Doctor Notes' },
-  { href: '/summary', label: 'Weekly Summary' },
-  { href: '/community', label: 'Community' },
-]
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={cn("h-full", "font-sans", geist.variable)}>
       <body className="min-h-full flex flex-col bg-rose-50">
-        <header className="bg-white border-b border-rose-100 px-6 py-3 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-rose-600 font-bold text-xl tracking-tight">CareCircle</span>
-            <span className="text-zinc-400 text-sm font-medium">· Bà Lan Nguyen</span>
-          </div>
-          <nav className="flex items-center gap-1">
-            {navLinks.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="px-3 py-1.5 text-sm font-medium text-zinc-600 rounded-md hover:bg-rose-50 hover:text-rose-700 transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </header>
-        <main className="flex-1 px-6 py-8 max-w-5xl mx-auto w-full">{children}</main>
+        <UserProvider>
+          <Nav />
+          <main className="flex-1 px-6 py-8 max-w-5xl mx-auto w-full">{children}</main>
+        </UserProvider>
       </body>
     </html>
   )

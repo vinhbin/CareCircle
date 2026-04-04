@@ -1,3 +1,8 @@
+// NOTE TRANSLATION — AI-powered medical jargon → plain language
+// POST /api/notes/[id]/translate — Translates a doctor note into any of 10 supported languages via Gemini
+// English translations are cached to ai_translations table; other languages generated on demand
+// Falls back to hardcoded English if Gemini fails
+
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { translateNote } from '@/lib/gemini'

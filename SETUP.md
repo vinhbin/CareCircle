@@ -56,6 +56,12 @@ Then add components:
 npx shadcn@latest add card badge button dialog table tabs avatar progress skeleton
 ```
 
+For CRUD forms (add/edit medications, tasks, notes):
+
+```bash
+npx shadcn@latest add input textarea select label
+```
+
 Commit everything shadcn generates before anyone branches off.
 
 ---
@@ -87,10 +93,12 @@ Each should return real Margaret data. If you get empty arrays, RLS is still on 
 
 ## Who builds what
 
+> **V2 update:** Person C pushes all backend + route changes before A and B pull.
+
 | Person | Files |
 |---|---|
-| **A** | `src/app/page.tsx`, `src/app/medications/page.tsx` |
-| **B** | `src/app/notes/page.tsx`, `src/app/summary/page.tsx` |
-| **C** | Vercel deploy, end-to-end testing |
+| **A** | `src/app/dashboard/page.tsx` (task CRUD + activity feed), `src/app/medications/page.tsx` (checklist + dose tracking) |
+| **B** | `src/app/notes/page.tsx` (Add Note dialog + photo scan), `src/app/summary/page.tsx` (translate) |
+| **C** | All API routes, Gemini functions, user selection page, user context, Vercel deploy |
 
-All API routes and lib files are already implemented. A and B just replace the stub `<pre>` output with real components.
+All API routes, user context, and Gemini functions are implemented by C. A and B build UI components against working APIs.

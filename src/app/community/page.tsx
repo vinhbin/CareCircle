@@ -19,7 +19,7 @@ const RESOURCES = [
         name: 'Georgia Charitable Care Network',
         description: 'Free clinics across Georgia for uninsured and underinsured patients.',
         action: 'Find a free clinic',
-        url: 'https://gaccn.org',
+        url: 'https://gacharitycare.org/find-a-clinic',
         languages: ['Spanish', 'Vietnamese'],
       },
       {
@@ -73,7 +73,7 @@ const RESOURCES = [
         name: 'GeorgiaCares (Medicare Help)',
         description: 'Free Medicare counseling for older adults — explains your benefits, helps with enrollment, and reviews bills.',
         action: 'Get free counseling',
-        url: 'https://mygeorgiacares.org',
+        url: 'https://aging.georgia.gov/georgia-ship',
         languages: ['Spanish', 'Korean', 'Vietnamese'],
       },
     ],
@@ -86,7 +86,7 @@ const RESOURCES = [
         name: 'Asian Americans Advancing Justice – Atlanta',
         description: 'Legal aid, health access, and advocacy for the Asian immigrant community in Georgia.',
         action: 'Get help',
-        url: 'https://www.aajc.org/atlanta',
+        url: 'https://www.advancingjustice-atlanta.org',
         languages: ['Vietnamese', 'Korean', 'Mandarin', 'Tagalog', 'Hindi'],
       },
       {

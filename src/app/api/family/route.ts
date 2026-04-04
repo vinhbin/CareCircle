@@ -1,3 +1,7 @@
+// FAMILY OVERVIEW
+// GET /api/family — Returns patient info, family members, 5 most recent tasks, and active medication count
+// Used by: dashboard page, user selection page
+
 import { supabase } from '@/lib/supabase'
 
 export async function GET() {
