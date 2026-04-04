@@ -28,8 +28,8 @@
 
 | Criterion | Our angle |
 |---|---|
-| **Innovation** | Multilingual AI medical translation (10 languages) — judges won't have seen this combination |
-| **Technical Execution** | Gemini + Supabase + Next.js fully integrated end-to-end with real seeded data |
+| **Innovation** | Photo scan → AI medical translation in 10 languages + activity attribution without auth — judges won't have seen this combination |
+| **Technical Execution** | Gemini 2.5 Flash (multimodal OCR + translation) + Supabase + Next.js fully integrated end-to-end with real data and full CRUD |
 | **Presentation** | "Kevin is 19. He works at Best Buy. He shouldn't be translating his grandmother's oncology notes." — emotional, personal, rehearsed |
 | **Community Impact** | 38% of Hispanic adults have no regular doctor. 72% speak a language other than English at home. Discharge note misunderstanding = readmission. |
 
@@ -92,8 +92,9 @@ Family: Minh (son, care coordinator, first-gen American), Lisa (daughter-in-law)
 
 **How user identity flows:**
 1. User selects their profile → `family_member_id` stored in context
-2. Every mutating API call includes `family_member_id`
-3. Backend logs the action to `activity_log` table
+2. Pages call `const { user } = useUser()` from `@/lib/user-context` to get the current member
+3. Every mutating API call (POST, PATCH, DELETE) must include `family_member_id: user.id` in the request body or query params
+4. Backend logs the action to `activity_log` table with who did it
 
 ---
 
@@ -185,6 +186,19 @@ create table medication_logs (
 - **Top of page: progress bar** — "12 of 14 doses given today" across all meds
 - "Add Medication" button → Dialog
 
+**How to calculate the progress bar:**
+1. Fetch all active meds from `GET /api/medications` (filter where `active === true`)
+2. Fetch today's logs from `GET /api/medications/log?date=YYYY-MM-DD`
+3. Parse each med's `frequency` string to get expected daily doses:
+   - `"Twice daily..."` → 2
+   - `"Once daily..."` → 1
+   - `"Three times daily..."` → 3
+   - Default to 1 if unsure
+4. Total expected = sum of all active meds' expected doses (e.g. Metformin 2 + Lisinopril 1 + Amlodipine 1 + Atorvastatin 1 = 5)
+5. Total given = count of today's logs
+6. Progress bar value = total given / total expected
+7. The POST to `/api/medications/log` returns `{ todayCount }` for that specific med — use it to update the count badge without refetching
+
 ---
 
 ### V2-E: Doctor Notes — Add Note + Photo Scan
@@ -208,6 +222,7 @@ export async function extractTextFromImage(base64Data: string, mimeType: string)
 - "Add Doctor Note" button → Dialog with shadcn Tabs:
   - **Manual Entry** tab: Input (doctor, specialty, date), Textarea (raw_notes)
   - **Scan Photo** tab: file input with `accept="image/*" capture="environment"` (camera on mobile), image preview, "Extract Text" button → calls scan API → populates raw_notes Textarea for review/edit
+  - **iPhone compatibility:** Must use `accept="image/*"` (not specific types) — iPhones send HEIC by default. Gemini supports HEIC, JPEG, PNG, WebP. The client reads the file as base64 via `FileReader.readAsDataURL()`, strips the `data:...;base64,` prefix, and sends `{ image: base64, mimeType: file.type }` to the API.
 - After save: prepend to notes list, close dialog
 
 **Demo story:** *"Minh takes a photo of Bà Lan's discharge paper. CareCircle reads it and explains it to the family — in Vietnamese."*
@@ -363,11 +378,21 @@ sequenceDiagram
 
 | Feature | CareVillage | CareCircle |
 |---|---|---|
-| AI | Generic chatbot | Context-aware summaries |
-| Doctor notes | Doc storage only | AI translation to plain English |
-| Weekly digest | None | AI narrative summary |
-| Focus | General caregiving | Serious illness, medical-first |
-| UX | Utilitarian | Emotionally designed |
+| AI | Generic chatbot | Context-aware medical translation + weekly summaries in 10 languages |
+| Doctor notes | Document storage only | AI translation to plain language + **photo scan** (paper note → AI reads it) |
+| Weekly digest | None | AI narrative summary, translatable to any supported language |
+| Medication tracking | Basic list | Checklist with **live dose counts**, attributed to who gave each dose |
+| Task management | Basic | Full CRUD with **activity attribution** — who did what, when |
+| User identity | Login required | No auth needed — family member picker, actions logged per person |
+| Activity feed | None | Full audit trail — "Kevin confirmed Metformin at 8:32 AM" |
+| Languages | English only | 10 languages — Vietnamese, Spanish, Mandarin, Korean, Tagalog, Hindi, Arabic, Portuguese, French |
+| Focus | General caregiving | Serious illness, **immigrant families**, medical-first |
+| UX | Utilitarian | Emotionally designed — "Who's checking in?" not "Login" |
+
+**What judges won't have seen elsewhere:**
+1. **Photo scan → AI translate** — take a photo of a paper discharge note, AI reads it, explains it in the patient's native language
+2. **Activity attribution without auth** — no login wall, but every action tracked per family member
+3. **Multilingual medical translation** — not generic Google Translate, but medical jargon → plain language in 10 languages
 
 **Pitch line:** *"Kevin is 19. He works at Best Buy. Every time his grandmother sees a doctor, he's handed a discharge note and asked to explain it to her — in Vietnamese — using words he doesn't understand in English. CareCircle fixes that."*
 
@@ -854,34 +879,48 @@ export async function POST() {
 
 ---
 
-## Phase 7 — Pages (Hours 2–12, Persons A & B)
+## Phase 7 — Pages (Persons A & B)
 
-### `src/app/layout.tsx`
-- Top nav: CareCircle logo + "Margaret Chen" + 4 nav links
-- Warm color theme: rose/amber tones, NOT clinical blue
+> **⚠️ V2 UPDATE:** This section is superseded by the V2 Features section above. Key changes:
+> - Dashboard moved from `/` to `/dashboard` (landing page is now user selection)
+> - Layout + nav already built — includes user avatar, active link highlighting, "Switch" link
+> - Medications are **NOT read-only** — full CRUD + checklist with live dose counts
+> - Doctor Notes need **"Add Note" dialog** with Manual Entry + Photo Scan tabs
+> - Weekly Summary needs **language selector + translate** button
+> - All pages should use `useUser()` to get current family member for API calls
+>
+> **Read V2-C through V2-F above for full specs.** The original specs below are kept for reference only.
 
-### Page 1: Dashboard `/` — Person A, Hours 2–6
+### Page 1: Dashboard `/dashboard` — Person A
 - `PatientCard` — name, age, diagnosis, primary doctor
 - `FamilyAvatars` — shadcn Avatar row with name + role badge
-- `TaskSummary` — pending/completed counts + next due item
+- `TaskList` — **full CRUD**: add, edit, toggle complete, delete tasks (via dialogs)
 - `MedCountBadge` — "4 active medications"
+- `ActivityFeed` — recent actions from `/api/activity`: "Kevin confirmed Metformin at 8:32 AM"
 
-### Page 2: Medication Tracker `/medications` — Person A, Hours 6–10
-- shadcn `Table` — name, dosage, frequency, administered by, active badge
-- Green badge = active, gray = inactive
-- No delete/edit needed — read-only for demo
+### Page 2: Medication Tracker `/medications` — Person A
+- **Checklist cards** (not table rows) — each med has a checkbox to confirm dose given
+- **Live count badge** per med: "2/3 doses today" from `/api/medications/log`
+- **Progress bar** at top: "12 of 14 doses given today" across all meds
+- Last given: "Kevin, 8:32 AM"
+- Add/Edit/Delete medication dialogs
+- Active/inactive toggle
 
-### Page 3: Doctor Notes `/notes` — Person B, Hours 2–7
+### Page 3: Doctor Notes `/notes` — Person B
 - `NoteCard` per visit — doctor, specialty, date, raw note text
-- "Explain for Family" button → POST to translate API
-- Loading state: "Translating for your family..." with spinner
-- `TranslationPanel` slides in: plain English + action items + questions to ask
+- "Explain for Family" button → POST to translate API (already working)
+- `TranslationPanel` slides in: plain language + action items + questions to ask
+- **"Add Doctor Note" button** → Dialog with shadcn Tabs:
+  - **Manual Entry** tab: Input (doctor, specialty, date), Textarea (raw_notes)
+  - **Scan Photo** tab: file input with `accept="image/*" capture="environment"`, image preview, "Extract Text" button → POST `/api/notes/scan` → populates raw_notes for review
 
-### Page 4: AI Weekly Summary `/summary` — Person B, Hours 7–12
+### Page 4: AI Weekly Summary `/summary` — Person B
 - If no summary: empty state + "Generate This Week's Summary" button
 - Loading: animated skeleton card
 - `SummaryCard`: narrative paragraph + "Watch For" section + action items list
 - `WeekBadge`: "Week of April 6, 2025"
+- **Language selector** (import from `src/lib/languages.ts`) + "Translate" button → POST `/api/summary/translate`
+- Translated summary in colored panel below original
 
 ---
 
