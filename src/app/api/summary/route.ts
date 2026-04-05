@@ -5,6 +5,7 @@
 
 import { supabase } from '@/lib/supabase'
 import { generateWeeklySummary } from '@/lib/gemini'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function GET() {
   const { data, error } = await supabase
@@ -25,7 +26,10 @@ export async function GET() {
   })
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  const ip = req.headers.get('x-forwarded-for') ?? 'unknown'
+  if (!rateLimit(ip, 5)) return rateLimitResponse()
+
   const [
     { data: patient },
     { data: meds },
@@ -96,7 +100,7 @@ export async function POST() {
 
     return Response.json(result)
   } catch (err) {
-    console.error('Gemini summary failed:', err)
+    console.error('Gemini summary failed:', err instanceof Error ? err.message : 'Unknown error')
     return Response.json({
       summaryText:
         "It was a busy week for Bà Lan's care. She saw Dr. Tran for her diabetes and blood pressure check-up, and her blood sugar is still a bit higher than the doctors would like (HbA1c 8.2%). A new blood pressure medication was added, and Dr. Park wants her to start tracking her blood sugar at home every day. The good news — her foot exam with Dr. Lopez showed no nerve damage.",

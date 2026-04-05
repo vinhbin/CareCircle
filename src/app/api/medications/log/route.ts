@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { medication_id, family_member_id } = await req.json()
+  const { medication_id, family_member_id, date: clientDate } = await req.json()
 
   if (!medication_id || !family_member_id) {
     return Response.json({ error: 'medication_id and family_member_id are required' }, { status: 400 })
@@ -36,15 +36,16 @@ export async function POST(req: NextRequest) {
   if (logError) return Response.json({ error: logError.message }, { status: 500 })
 
   // Log to activity
-  await supabase.from('activity_log').insert({
+  const { error: activityError } = await supabase.from('activity_log').insert({
     patient_id: 1,
     family_member_id,
     action_type: 'medication_confirmed',
     description: `Confirmed ${log.medications.name} was given`,
   })
+  if (activityError) console.error('Activity log failed:', activityError.message)
 
-  // Return today's count for this medication
-  const today = new Date().toISOString().split('T')[0]
+  // Return today's count for this medication (use client date to avoid UTC timezone mismatch)
+  const today = clientDate ?? new Date().toISOString().split('T')[0]
   const { count } = await supabase
     .from('medication_logs')
     .select('*', { count: 'exact', head: true })

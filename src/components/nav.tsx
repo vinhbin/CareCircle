@@ -23,7 +23,7 @@ export function Nav() {
   const router = useRouter()
 
   // Hide nav on landing and user selection pages
-  if (pathname === '/' || pathname === '/select') return null
+  if (pathname === '/' || pathname === '/select' || pathname.startsWith('/emergency')) return null
 
   return (
     <header className="bg-white border-b border-rose-100 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between shadow-sm">

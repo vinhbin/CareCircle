@@ -34,23 +34,31 @@ export async function POST(req: NextRequest) {
   if (error) return Response.json({ error: error.message }, { status: 500 })
 
   if (family_member_id) {
-    await supabase.from('activity_log').insert({
+    const { error: activityError } = await supabase.from('activity_log').insert({
       patient_id: 1,
       family_member_id,
       action_type: 'medication_added',
       description: `Added medication "${name}"`,
     })
+    if (activityError) console.error('Activity log failed:', activityError.message)
   }
 
   return Response.json(data)
 }
 
+const ALLOWED_MED_FIELDS = ['name', 'dosage', 'frequency', 'purpose', 'administered_by', 'start_date', 'active'] as const
+
 export async function PATCH(req: NextRequest) {
   const body = await req.json()
-  const { id, family_member_id, ...fields } = body
+  const { id, family_member_id } = body
 
   if (!id) {
     return Response.json({ error: 'id is required' }, { status: 400 })
+  }
+
+  const fields: Record<string, unknown> = {}
+  for (const key of ALLOWED_MED_FIELDS) {
+    if (key in body) fields[key] = body[key]
   }
 
   const { data, error } = await supabase
@@ -63,12 +71,13 @@ export async function PATCH(req: NextRequest) {
   if (error) return Response.json({ error: error.message }, { status: 500 })
 
   if (family_member_id) {
-    await supabase.from('activity_log').insert({
+    const { error: activityError } = await supabase.from('activity_log').insert({
       patient_id: 1,
       family_member_id,
       action_type: 'medication_updated',
       description: `Updated medication "${data.name}"`,
     })
+    if (activityError) console.error('Activity log failed:', activityError.message)
   }
 
   return Response.json(data)
@@ -93,12 +102,13 @@ export async function DELETE(req: NextRequest) {
   if (error) return Response.json({ error: error.message }, { status: 500 })
 
   if (family_member_id && med) {
-    await supabase.from('activity_log').insert({
+    const { error: activityError } = await supabase.from('activity_log').insert({
       patient_id: 1,
       family_member_id: Number(family_member_id),
       action_type: 'medication_deleted',
       description: `Removed medication "${med.name}"`,
     })
+    if (activityError) console.error('Activity log failed:', activityError.message)
   }
 
   return Response.json({ success: true })

@@ -5,7 +5,7 @@
 
 'use client'
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, type ReactNode } from 'react'
 
 export type FamilyMember = {
   id: number
@@ -25,14 +25,14 @@ type UserContextType = {
 const UserContext = createContext<UserContextType>({ user: null, setUser: () => {} })
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUserState] = useState<FamilyMember | null>(null)
-
-  useEffect(() => {
+  const [user, setUserState] = useState<FamilyMember | null>(() => {
+    if (typeof window === 'undefined') return null
     const stored = localStorage.getItem('carecircle_user')
     if (stored) {
-      try { setUserState(JSON.parse(stored)) } catch { /* ignore */ }
+      try { return JSON.parse(stored) } catch { return null }
     }
-  }, [])
+    return null
+  })
 
   function setUser(member: FamilyMember | null) {
     setUserState(member)

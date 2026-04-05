@@ -17,7 +17,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { doctor_name, specialty, visit_date, raw_notes, family_member_id } = await req.json()
+  const { doctor_name, specialty, visit_date, raw_notes, family_member_id, source } = await req.json()
 
   if (!doctor_name || !specialty || !visit_date || !raw_notes) {
     return Response.json({ error: 'doctor_name, specialty, visit_date, and raw_notes are required' }, { status: 400 })
@@ -32,12 +32,15 @@ export async function POST(req: NextRequest) {
   if (error) return Response.json({ error: error.message }, { status: 500 })
 
   if (family_member_id) {
-    await supabase.from('activity_log').insert({
+    const { error: activityError } = await supabase.from('activity_log').insert({
       patient_id: 1,
       family_member_id,
       action_type: 'note_added',
-      description: `Added doctor note from ${doctor_name}`,
+      description: source === 'voice_memo'
+        ? `Recorded a voice memo from ${doctor_name}'s visit`
+        : `Added doctor note from ${doctor_name}`,
     })
+    if (activityError) console.error('Activity log failed:', activityError.message)
   }
 
   return Response.json(data)

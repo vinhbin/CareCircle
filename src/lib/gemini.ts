@@ -11,7 +11,13 @@ const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
 function parseJSON(text: string) {
   const cleaned = text.trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
-  return JSON.parse(cleaned)
+  try {
+    return JSON.parse(cleaned)
+  } catch {
+    const match = cleaned.match(/\{[\s\S]*\}/)
+    if (match) return JSON.parse(match[0])
+    throw new Error('No valid JSON found in Gemini response')
+  }
 }
 
 export async function translateNote(
