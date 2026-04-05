@@ -3,44 +3,122 @@
 // Server component — no client-side JS needed
 
 import Link from 'next/link'
+import HeroCarousel from '@/components/HeroCarousel'
 
 export default function LandingPage() {
   return (
     <div>
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden px-6 pt-20 pb-24">
+      <section className="relative overflow-hidden px-6 pt-16 pb-20 lg:pt-24 lg:pb-28">
         {/* Warm radial glow */}
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-[-40%] left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-rose-200/60 via-amber-100/40 to-transparent blur-3xl" />
           <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-gradient-to-tl from-amber-200/30 to-transparent blur-3xl" />
         </div>
 
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 backdrop-blur-sm border border-rose-200/60 text-xs font-medium text-rose-700 mb-8">
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-            10 languages supported
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* ── Left: text ── */}
+          <div className="flex flex-col justify-center items-start text-left w-full">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 backdrop-blur-sm border border-rose-200/60 text-xs font-medium text-rose-700 mb-8">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+              10 languages supported
+            </div>
+
+            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[1.08]">
+              <span className="bg-gradient-to-r from-rose-700 via-rose-500 to-amber-500 bg-clip-text text-transparent">
+                Care, understood
+              </span>
+              <br />
+              <span className="text-zinc-800">in every language.</span>
+            </h1>
+
+            <p className="mt-6 text-lg sm:text-xl text-zinc-500 leading-relaxed">
+              One shared place for your family to manage a loved one&apos;s care&mdash;medications, doctor notes, and tasks&mdash;translated into plain language your family actually understands.
+            </p>
+
+            <div className="mt-10 flex flex-col sm:flex-row items-start gap-4">
+              <Link
+                href="/select"
+                className="px-8 py-3.5 bg-gradient-to-r from-rose-600 to-rose-500 text-white font-semibold rounded-xl hover:from-rose-700 hover:to-rose-600 transition-all shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/30 text-lg"
+              >
+                Get Started
+              </Link>
+              <span className="text-sm text-zinc-400">No account needed</span>
+            </div>
           </div>
 
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.08]">
-            <span className="bg-gradient-to-r from-rose-700 via-rose-500 to-amber-500 bg-clip-text text-transparent">
-              Care, understood
-            </span>
-            <br />
-            <span className="text-zinc-800">in every language.</span>
-          </h1>
+          {/* ── Right: family photo carousel ── */}
+          <div className="w-full">
+            <HeroCarousel />
+          </div>
+        </div>
+      </section>
 
-          <p className="mt-6 text-lg sm:text-xl text-zinc-500 max-w-xl mx-auto leading-relaxed">
-            One shared place for your family to manage a loved one&apos;s care&mdash;medications, doctor notes, and tasks&mdash;translated into plain language your family actually understands.
-          </p>
+      {/* ── About Us ── */}
+      <section className="px-6 py-20 bg-gradient-to-b from-white to-rose-50/40">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-center text-sm font-medium text-zinc-400 uppercase tracking-widest mb-4">About Us</p>
+          <h2 className="text-center text-3xl sm:text-4xl font-bold text-zinc-800 mb-16">Why we built CareCircle</h2>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/select"
-              className="px-8 py-3.5 bg-gradient-to-r from-rose-600 to-rose-500 text-white font-semibold rounded-xl hover:from-rose-700 hover:to-rose-600 transition-all shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/30 text-lg"
-            >
-              Get Started
-            </Link>
-            <span className="text-sm text-zinc-400">No account needed</span>
+          <div className="grid md:grid-cols-2 gap-10">
+            {/* Origin story */}
+            <div className="flex flex-col gap-4">
+              <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 text-white mb-2 self-start">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-zinc-800">The story behind the app</h3>
+              <p className="text-zinc-500 leading-relaxed text-sm">
+                Bà Lan is 70 years old. She immigrated from Vietnam three years ago. She has diabetes and high blood pressure. She speaks no English. Every time she sees a doctor, her 19-year-old grandson Kevin gets handed a discharge note full of words like &ldquo;suboptimal glycemic control&rdquo; and &ldquo;eGFR 61, CKD Stage 2&rdquo; — and he&apos;s supposed to explain it to her. In Vietnamese. Using words he doesn&apos;t understand in English.
+              </p>
+              <p className="text-zinc-500 leading-relaxed text-sm">
+                Kevin works at Best Buy. He loves his grandmother. He shouldn&apos;t have to be her doctor, her translator, and her care coordinator all at once. We built CareCircle so he doesn&apos;t have to be.
+              </p>
+            </div>
+
+            {/* Mission + built for */}
+            <div className="flex flex-col gap-8">
+              <div>
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white mb-4 self-start">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-zinc-800 mb-2">Our mission</h3>
+                <p className="text-zinc-500 leading-relaxed text-sm">
+                  We&apos;re not translating words — we&apos;re translating understanding. CareCircle turns complex medical language into warm, plain-language explanations in 10 languages, so every family member can participate in a loved one&apos;s care — regardless of what language they speak or what country they came from.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-base font-semibold text-zinc-700 mb-3">Built for families who</h3>
+                <ul className="space-y-2">
+                  {[
+                    'Navigate healthcare in a language that isn\'t their first',
+                    'Rely on a younger family member to translate medical notes',
+                    'Can\'t afford to misunderstand a discharge instruction',
+                    'Deserve the same quality of care coordination as anyone else',
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-zinc-500">
+                      <span className="mt-1 w-4 h-4 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                      </span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Atlanta callout */}
+          <div className="mt-14 rounded-2xl bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-100 p-6 text-center">
+            <p className="text-sm text-zinc-500 leading-relaxed max-w-2xl mx-auto">
+              <span className="font-semibold text-zinc-700">This isn&apos;t hypothetical.</span> This is happening in Atlanta, right now, to families in your community. One misunderstood discharge note can mean a missed dose, a hospital readmission, or worse. CareCircle exists to close that gap.
+            </p>
           </div>
         </div>
       </section>
