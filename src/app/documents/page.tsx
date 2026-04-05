@@ -1,4 +1,4 @@
-// MEDICAL BINDER — Upload documents, Gemini auto-classifies, organized gallery
+// MEDICAL BINDER — Upload documents, Gemini auto-classifies, folder-based gallery
 // GET  /api/documents       — All documents with uploader joined
 // POST /api/documents       — Upload + classify + save
 // GET  /api/documents/[id]  — Signed URL for viewing
@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/lib/user-context'
 import { Card, CardContent } from '@/components/ui/card'
@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import {
   FolderOpen, Plus, Upload, FileText, Trash2, Eye, Sparkles,
   X, FlaskConical, Pill, CreditCard, ClipboardList, ScanLine, File,
+  ChevronRight, ArrowLeft,
 } from 'lucide-react'
 
 type Document = {
@@ -30,15 +31,13 @@ type Document = {
   uploader: { id: number; name: string; avatar_url: string | null } | null
 }
 
-const CATEGORIES = ['All', 'Lab Result', 'Prescription', 'Insurance Card', 'Discharge Summary', 'Imaging/X-Ray', 'Other'] as const
-
-const CATEGORY_STYLES: Record<string, { bg: string; text: string; icon: typeof FileText }> = {
-  'Lab Result':        { bg: 'bg-emerald-50', text: 'text-emerald-600', icon: FlaskConical },
-  'Prescription':      { bg: 'bg-violet-50',  text: 'text-violet-600',  icon: Pill },
-  'Insurance Card':    { bg: 'bg-sky-50',     text: 'text-sky-600',     icon: CreditCard },
-  'Discharge Summary': { bg: 'bg-amber-50',   text: 'text-amber-600',   icon: ClipboardList },
-  'Imaging/X-Ray':     { bg: 'bg-rose-50',    text: 'text-rose-600',    icon: ScanLine },
-  'Other':             { bg: 'bg-zinc-100',   text: 'text-zinc-600',    icon: File },
+const CATEGORY_STYLES: Record<string, { bg: string; text: string; iconBg: string; icon: typeof FileText }> = {
+  'Lab Result':        { bg: 'bg-emerald-50', text: 'text-emerald-600', iconBg: 'bg-emerald-100', icon: FlaskConical },
+  'Prescription':      { bg: 'bg-violet-50',  text: 'text-violet-600',  iconBg: 'bg-violet-100',  icon: Pill },
+  'Insurance Card':    { bg: 'bg-sky-50',     text: 'text-sky-600',     iconBg: 'bg-sky-100',     icon: CreditCard },
+  'Discharge Summary': { bg: 'bg-amber-50',   text: 'text-amber-600',   iconBg: 'bg-amber-100',   icon: ClipboardList },
+  'Imaging/X-Ray':     { bg: 'bg-rose-50',    text: 'text-rose-600',    iconBg: 'bg-rose-100',    icon: ScanLine },
+  'Other':             { bg: 'bg-zinc-50',    text: 'text-zinc-600',    iconBg: 'bg-zinc-100',    icon: File },
 }
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/heic', 'image/heif', 'application/pdf']
@@ -48,7 +47,9 @@ export default function DocumentsPage() {
   const { user } = useUser()
   const [documents, setDocuments] = useState<Document[]>([])
   const [initialLoading, setInitialLoading] = useState(true)
-  const [activeFilter, setActiveFilter] = useState<string>('All')
+
+  // Folder navigation
+  const [openFolder, setOpenFolder] = useState<string | null>(null)
 
   // Upload dialog
   const [uploadOpen, setUploadOpen] = useState(false)
@@ -78,6 +79,19 @@ export default function DocumentsPage() {
   }, [])
 
   useEffect(() => { fetchDocuments() }, [fetchDocuments])
+
+  // Group documents by category
+  const folders = useMemo(() => {
+    const map: Record<string, Document[]> = {}
+    for (const doc of documents) {
+      const cat = doc.category || 'Other'
+      if (!map[cat]) map[cat] = []
+      map[cat].push(doc)
+    }
+    return map
+  }, [documents])
+
+  const folderDocs = openFolder ? (folders[openFolder] || []) : []
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -159,6 +173,9 @@ export default function DocumentsPage() {
       await fetch(`/api/documents/${doc.id}`, { method: 'DELETE' })
       setDocuments(prev => prev.filter(d => d.id !== doc.id))
       if (viewDoc?.id === doc.id) setViewDoc(null)
+      // If folder is now empty, go back to folders view
+      const remaining = documents.filter(d => d.id !== doc.id && d.category === openFolder)
+      if (openFolder && remaining.length === 0) setOpenFolder(null)
     } catch {
       alert('Failed to delete document.')
     } finally {
@@ -170,8 +187,6 @@ export default function DocumentsPage() {
     const d = new Date(dateStr)
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
-
-  const filtered = activeFilter === 'All' ? documents : documents.filter(d => d.category === activeFilter)
 
   if (!user) return null
 
@@ -194,7 +209,7 @@ export default function DocumentsPage() {
         </Button>
       </div>
 
-      {/* Filter bar */}
+      {/* Stats bar */}
       <Card className="shadow-md shadow-rose-100/50 border-rose-100/60 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 delay-75 fill-mode-backwards">
         <div className="h-1.5 bg-gradient-to-r from-rose-300 via-rose-400 to-rose-300" />
         <CardContent className="py-3.5">
@@ -203,24 +218,24 @@ export default function DocumentsPage() {
               <FolderOpen className="w-4.5 h-4.5 text-rose-500" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap gap-1.5">
-                {CATEGORIES.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveFilter(cat)}
-                    className={`px-2.5 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${
-                      activeFilter === cat
-                        ? 'bg-rose-500 text-white shadow-sm shadow-rose-200/50'
-                        : 'bg-zinc-100 text-zinc-500 hover:bg-rose-50 hover:text-rose-600'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
+              {openFolder ? (
+                <button
+                  onClick={() => setOpenFolder(null)}
+                  className="flex items-center gap-1.5 text-sm cursor-pointer group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-zinc-400 group-hover:text-rose-500 transition-colors" />
+                  <span className="text-zinc-400 group-hover:text-rose-500 transition-colors font-medium">All Folders</span>
+                  <ChevronRight className="w-3 h-3 text-zinc-300" />
+                  <span className="font-semibold text-zinc-700">{openFolder}</span>
+                </button>
+              ) : (
+                <p className="text-sm font-medium text-zinc-600">
+                  {Object.keys(folders).length} folder{Object.keys(folders).length !== 1 ? 's' : ''}
+                </p>
+              )}
             </div>
             <Badge className="bg-rose-100 text-rose-600 hover:bg-rose-100 border-none text-[10px] font-semibold px-2 py-0.5 shrink-0">
-              {filtered.length} doc{filtered.length !== 1 ? 's' : ''}
+              {openFolder ? folderDocs.length : documents.length} doc{(openFolder ? folderDocs.length : documents.length) !== 1 ? 's' : ''}
             </Badge>
           </div>
         </CardContent>
@@ -228,14 +243,13 @@ export default function DocumentsPage() {
 
       {/* Loading skeleton */}
       {initialLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[0, 1, 2, 3, 4, 5].map(i => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map(i => (
             <Card key={i} className="shadow-md shadow-zinc-100/50 animate-in fade-in duration-300" style={{ animationDelay: `${i * 100}ms` }}>
-              <CardContent className="py-5 space-y-3">
-                <Skeleton className="h-32 w-full rounded-lg" />
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-3 w-24" />
+              <CardContent className="py-8 space-y-3 flex flex-col items-center">
+                <Skeleton className="h-12 w-12 rounded-xl" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-16" />
               </CardContent>
             </Card>
           ))}
@@ -249,7 +263,7 @@ export default function DocumentsPage() {
             <FolderOpen className="w-7 h-7 text-rose-200" />
           </div>
           <p className="text-sm font-medium text-zinc-600">No documents yet</p>
-          <p className="text-xs text-zinc-400 mt-1 max-w-[260px] mx-auto">Upload a lab result, prescription, or insurance card — AI will classify it for you</p>
+          <p className="text-xs text-zinc-400 mt-1 max-w-[260px] mx-auto">Upload a lab result, prescription, or insurance card — AI will classify it into folders for you</p>
           <Button
             size="sm"
             onClick={() => setUploadOpen(true)}
@@ -260,24 +274,49 @@ export default function DocumentsPage() {
         </div>
       )}
 
-      {/* No results for filter */}
-      {!initialLoading && documents.length > 0 && filtered.length === 0 && (
-        <div className="text-center py-12 animate-in fade-in duration-300">
-          <p className="text-sm text-zinc-400">No documents in &ldquo;{activeFilter}&rdquo;</p>
+      {/* ─── FOLDERS VIEW ─── */}
+      {!initialLoading && !openFolder && Object.keys(folders).length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Object.entries(folders).map(([category, docs], i) => {
+            const style = CATEGORY_STYLES[category] || CATEGORY_STYLES['Other']
+            const Icon = style.icon
+            return (
+              <button
+                key={category}
+                onClick={() => setOpenFolder(category)}
+                className="text-left cursor-pointer animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-backwards"
+                style={{ animationDelay: `${150 + i * 80}ms` }}
+              >
+                <Card className="shadow-md shadow-zinc-100/50 border-zinc-100/60 overflow-hidden transition-all hover:border-rose-200 hover:shadow-rose-100/40 hover:scale-[1.02] h-full">
+                  <CardContent className="py-6 flex flex-col items-center text-center gap-3">
+                    <div className={`w-14 h-14 rounded-2xl ${style.iconBg} flex items-center justify-center`}>
+                      <Icon className={`w-7 h-7 ${style.text}`} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-700">{category}</p>
+                      <p className="text-[11px] text-zinc-400 mt-0.5">
+                        {docs.length} document{docs.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </button>
+            )
+          })}
         </div>
       )}
 
-      {/* Document gallery grid */}
-      {!initialLoading && filtered.length > 0 && (
+      {/* ─── FOLDER CONTENTS VIEW ─── */}
+      {!initialLoading && openFolder && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((doc, i) => {
+          {folderDocs.map((doc, i) => {
             const style = CATEGORY_STYLES[doc.category] || CATEGORY_STYLES['Other']
             const Icon = style.icon
             return (
               <Card
                 key={doc.id}
                 className="shadow-md shadow-zinc-100/50 border-zinc-100/60 overflow-hidden transition-all hover:border-rose-200 hover:shadow-rose-100/40 group animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-backwards"
-                style={{ animationDelay: `${150 + i * 80}ms` }}
+                style={{ animationDelay: `${100 + i * 80}ms` }}
               >
                 {/* Card top — clickable area */}
                 <button
@@ -300,7 +339,7 @@ export default function DocumentsPage() {
                 </button>
 
                 <CardContent className="py-3.5 space-y-2.5">
-                  {/* Category badge */}
+                  {/* Category badge + delete */}
                   <div className="flex items-center justify-between">
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${style.bg} ${style.text}`}>
                       <Icon className="w-3 h-3" />
@@ -365,7 +404,6 @@ export default function DocumentsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Preview */}
               {selectedFile.preview ? (
                 <div className="rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -386,7 +424,6 @@ export default function DocumentsPage() {
                 AI will automatically classify this document
               </div>
 
-              {/* Change file */}
               <button
                 onClick={() => setSelectedFile(null)}
                 className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 cursor-pointer transition-colors"
@@ -396,7 +433,6 @@ export default function DocumentsPage() {
             </div>
           )}
 
-          {/* Uploading spinner */}
           {uploading && (
             <div className="flex items-center gap-3 text-sm bg-amber-50 border border-amber-200/60 rounded-xl p-3.5">
               <span className="w-4.5 h-4.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin shrink-0" />
@@ -435,7 +471,6 @@ export default function DocumentsPage() {
               </DialogHeader>
 
               <div className="space-y-3">
-                {/* Category + meta */}
                 <div className="flex items-center gap-2 flex-wrap">
                   {(() => {
                     const style = CATEGORY_STYLES[viewDoc.category] || CATEGORY_STYLES['Other']
@@ -453,7 +488,6 @@ export default function DocumentsPage() {
                   )}
                 </div>
 
-                {/* Document content */}
                 {viewLoading ? (
                   <div className="flex items-center justify-center py-16">
                     <span className="w-6 h-6 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
