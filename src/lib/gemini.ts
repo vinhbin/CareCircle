@@ -4,6 +4,7 @@
 // extractTextFromImage()  — multimodal OCR: photo of paper note → extracted text
 // transcribeAudio()       — multimodal: audio recording → transcribed text
 // translateText()         — plain text translation for summaries
+// classifyDocument()      — multimodal: document image/PDF → { category, description }
 
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
@@ -91,6 +92,18 @@ export async function transcribeAudio(base64Data: string, mimeType: string): Pro
     { inlineData: { mimeType, data: base64Data } },
   ])
   return result.response.text()
+}
+
+export async function classifyDocument(base64Data: string, mimeType: string): Promise<{ category: string; description: string }> {
+  const result = await model.generateContent([
+    { text: `You are a medical document classifier. Look at this document and determine:
+1. category — one of: "Lab Result", "Prescription", "Insurance Card", "Discharge Summary", "Imaging/X-Ray", "Other"
+2. description — a short (under 15 words) plain-language summary of what this document is
+
+Respond ONLY as valid JSON with no markdown, no code fences: { "category": "...", "description": "..." }` },
+    { inlineData: { mimeType, data: base64Data } },
+  ])
+  return parseJSON(result.response.text()) as { category: string; description: string }
 }
 
 export async function translateText(text: string, language: string): Promise<string> {

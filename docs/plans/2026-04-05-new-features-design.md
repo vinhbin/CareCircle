@@ -25,7 +25,7 @@ Hardcoded static page at `/emergency/ba-lan` with Bà Lan's critical medical inf
 
 ---
 
-## Feature 2: Voice Memo (~2 hrs)
+## Feature 2: Voice Memo (~2 hrs) — COMPLETE ✅
 
 Third tab in Add Note dialog. Record → Stop → Transcribe → edit → save.
 
@@ -35,27 +35,22 @@ Third tab in Add Note dialog. Record → Stop → Transcribe → edit → save.
 - `src/lib/gemini.ts` — new `transcribeAudio(base64Data, mimeType)`, same `inlineData` pattern as OCR
 - `src/app/notes/page.tsx` — new "Voice Memo" tab
 
-### UI flow
+### What was built
 
-1. Add Note → "Voice Memo" tab
-2. Big red mic button → pulses "Recording..." with elapsed time
-3. Stop → `<audio>` playback to review
-4. "Transcribe" → spinner → text fills `raw_notes` textarea
-5. Edit → fill doctor/specialty/date → Save
-6. On failure: toast "Transcription unavailable — type your notes manually"
-
-### Browser compatibility
-
-- `MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'`
-- Pass detected MIME to API
-
-### Activity log
-
-- Saves with `source: 'voice_memo'` → "Recorded a voice memo from Dr. Chen's visit"
+- [x] Third tab "Voice Memo" in Add Note dialog (Manual | Scan Photo | Voice Memo)
+- [x] Big rose mic button → pulsing animation while recording with elapsed timer (MM:SS)
+- [x] Stop → audio playback card with play/pause + re-record option
+- [x] "Transcribe with AI" button → Gemini multimodal speech-to-text
+- [x] Transcribed text fills editable textarea, user fills doctor/specialty/date → Save
+- [x] On failure: alert "Transcription unavailable — type your notes manually"
+- [x] Browser compatibility: `audio/webm` with `audio/mp4` fallback
+- [x] Rate-limited API endpoint (10 req/60s) with audio type + size validation
+- [x] Activity log: `source: 'voice_memo'` → "Recorded a voice memo from Dr. Chen's visit"
+- [x] No DB changes required — saves to existing `doctor_notes` table via `POST /api/notes`
 
 ---
 
-## Feature 3: Smart Medical Binder (~3 hrs)
+## Feature 3: Smart Medical Binder (~3 hrs) — COMPLETE ✅
 
 Upload medical documents, Gemini auto-classifies, organized gallery.
 
@@ -66,21 +61,18 @@ Upload medical documents, Gemini auto-classifies, organized gallery.
 - `src/app/api/documents/[id]/route.ts` — GET (signed URL, 1hr) + DELETE (storage + DB + log)
 - `src/lib/gemini.ts` — new `classifyDocument(base64Data, mimeType)`
 
-### Upload flow
+### What was built
 
-1. "Upload Document" → file picker (`image/*,.pdf`)
-2. Client validates: MIME `image/*` or `application/pdf`, size < 10MB
-3. POST base64 + fileName + mimeType + description + family_member_id
-4. Backend: `supabase.storage.from('documents').upload()`
-5. Backend: `classifyDocument()` → `{ category, description }`. Failure fallback: `{ category: 'Other', description: fileName }`
-6. Backend: insert `documents` + activity log (error-checked)
-7. Frontend: refresh gallery
-
-### Gallery
-
-- Grid of cards: thumbnail, category badge (color pill), AI description, date, uploader
-- Click → full-size Dialog via signed URL
-- Category filter pills: Lab Result, Prescription, Insurance Card, Discharge Summary, Imaging/X-Ray, Other
+- [x] Upload dialog with file picker (image/*, .pdf), client-side MIME + size validation
+- [x] POST base64 → Supabase storage upload → Gemini classifyDocument → DB insert + activity log
+- [x] Gallery grid with category badge (color pill), AI description, date, uploader
+- [x] Category filter pills: All, Lab Result, Prescription, Insurance Card, Discharge Summary, Imaging/X-Ray, Other
+- [x] Click card → full-size Dialog via signed URL (1hr expiry)
+- [x] Delete with confirmation (removes storage + DB + activity log)
+- [x] Empty state, loading skeletons, staggered fade-in animations matching design system
+- [x] Nav: "Documents" link added after "Weekly Summary"
+- [x] Rate-limited POST endpoint (10 req/60s) with MIME + size validation
+- [x] Gemini classification fallback: `{ category: 'Other', description: fileName }` on failure
 
 ### Storage
 

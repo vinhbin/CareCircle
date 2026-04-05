@@ -14,6 +14,7 @@ const navLinks = [
   { href: '/medications', label: 'Medications' },
   { href: '/notes', label: 'Doctor Notes' },
   { href: '/summary', label: 'Weekly Summary' },
+  { href: '/documents', label: 'Documents' },
   { href: '/community', label: 'Community' },
 ]
 
