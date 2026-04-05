@@ -219,7 +219,7 @@ function ResourceCard({ item, color, index }: { item: ResourceItem; color: Resou
 
 export default function CommunityPage() {
   return (
-    <div className="px-4 sm:px-6 lg:px-10 xl:px-16 pb-12">
+    <div className="max-w-6xl mx-auto pb-20 lg:pb-8">
       {/* Header */}
       <div className="mb-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
         <h1 className="text-2xl lg:text-3xl font-bold text-zinc-800 tracking-tight">

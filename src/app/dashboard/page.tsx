@@ -563,7 +563,7 @@ export default function DashboardPage() {
   if (!user) return null
 
   return (
-    <div className="space-y-6 lg:space-y-8">
+    <div className="max-w-7xl mx-auto pb-20 lg:pb-8 space-y-6 lg:space-y-8">
       {/* Page header with Emergency Card action */}
       <div className="flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 duration-500">
         <h1 className="text-2xl lg:text-3xl font-bold text-zinc-800 tracking-tight">Dashboard</h1>
@@ -593,7 +593,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Sidebar — Care Team + Meds + Activity */}
-        <div className="space-y-5 lg:sticky lg:top-6 lg:self-start">
+        <div className="space-y-5 lg:sticky lg:top-24 lg:self-start">
           <FamilyAvatars members={members} />
           <MedCountBadge count={activeMedCount} />
           <ActivityFeed activity={activity} />

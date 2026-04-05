@@ -191,7 +191,7 @@ export default function DocumentsPage() {
   if (!user) return null
 
   return (
-    <div className="space-y-6 lg:space-y-8">
+    <div className="max-w-6xl mx-auto pb-20 lg:pb-8 space-y-6 lg:space-y-8">
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
         <div>

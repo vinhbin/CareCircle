@@ -141,7 +141,7 @@ export default function MedicationsPage() {
   const inactiveCount = meds.filter(m => !m.active).length
 
   return (
-    <div className="space-y-6 lg:space-y-8">
+    <div className="max-w-7xl mx-auto pb-20 lg:pb-8 space-y-6 lg:space-y-8">
       {/* Page header */}
       <div className="flex items-end justify-between animate-in fade-in slide-in-from-bottom-2 duration-500">
         <div>
