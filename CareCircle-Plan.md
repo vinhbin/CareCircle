@@ -155,10 +155,12 @@ create table medication_logs (
 | PATCH | Expanded: accepts `{ id, family_member_id, title?, description?, assigned_to_id?, due_date?, status? }` → logs status changes |
 | DELETE | `?id=N` query param → deletes task + logs to activity_log |
 
-**Dashboard UI (`src/app/dashboard/page.tsx`):**
-- PatientCard, FamilyAvatars, MedCountBadge
-- Task list with: "Add Task" button → Dialog, toggle complete, Edit, Delete
-- **Activity feed** at bottom — recent actions from `/api/activity`
+**Dashboard UI (`src/app/dashboard/page.tsx`) — ✅ DONE:**
+- PatientCard (horizontal info grid on desktop), FamilyAvatars (name-derived colors), MedCountBadge (sky accent)
+- Task list with: "Add Task" button → Dialog, toggle complete, Edit, Delete (inline badges on desktop, stacked on mobile)
+- **Activity feed** (timeline style with color-coded dots + connecting line) — recent actions from `/api/activity`
+- Personalized greeting header ("Good morning, Kevin — Caring for Bà Lan Nguyen")
+- "Soft Sanctuary" design: rose palette, warm shadows, staggered fade-in animations, full-width desktop layout
 
 ---
 
@@ -176,15 +178,14 @@ create table medication_logs (
 - GET `?date=YYYY-MM-DD` → all dose logs for that day with who + when
 - POST `{ medication_id, family_member_id }` → confirms dose was given
 
-**Medications UI (`src/app/medications/page.tsx`) — Checklist style:**
-- Each med = a **checklist card** (not a table row):
-  - Checkbox to mark as given → POST to `/api/medications/log`
-  - Med name, dosage, frequency, purpose
-  - **Live count badge**: "2/3 doses today" (today's logs vs expected frequency)
-  - Last given: "Kevin, 8:32 AM"
-  - Edit button, Delete button, active toggle
-- **Top of page: progress bar** — "12 of 14 doses given today" across all meds
-- "Add Medication" button → Dialog
+**Medications UI (`src/app/medications/page.tsx`) — ✅ DONE:**
+- Desktop: shadcn Table with status badge, medication, dosage, frequency, today's doses progress bar, administered by, confirm dose action
+- Mobile: card-based layout with same info stacked + dose progress + confirm button
+- **Dose tracking**: progress bar per med (sky → emerald at limit → red over limit)
+- **Overdose warning**: when doses reach frequency limit, confirmation dialog warns about exceeding prescribed amount; requires explicit "Log Anyway"
+- Summary stat cards: total, active, inactive counts
+- "Add Medication" button → Dialog (name, dosage, frequency, purpose, administered by, start date)
+- Consistent "Soft Sanctuary" design: rose gradient bar, warm shadows, staggered animations
 
 **How to calculate the progress bar:**
 1. Fetch all active meds from `GET /api/medications` (filter where `active === true`)

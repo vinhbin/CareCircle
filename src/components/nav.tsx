@@ -26,7 +26,7 @@ export function Nav() {
   if (pathname === '/' || pathname === '/select') return null
 
   return (
-    <header className="bg-white border-b border-rose-100 px-6 py-3 flex items-center justify-between shadow-sm">
+    <header className="bg-white border-b border-rose-100 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-2">
         <Link href="/dashboard" className="text-rose-600 font-bold text-xl tracking-tight hover:text-rose-700">
           CareCircle

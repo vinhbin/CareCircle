@@ -1,6 +1,6 @@
 # CareCircle — Build Progress
 
-> Last updated: 2026-04-04
+> Last updated: 2026-04-05
 
 ---
 
@@ -80,19 +80,19 @@
 | Community Resources | ✅ Done | Static page at `/community` — broken links fixed |
 | shadcn components | ✅ Done | card, badge, button, dialog, table, tabs, avatar, progress, skeleton, input, textarea, select, label |
 | Doc comments | ✅ Done | All API routes, lib files, pages, and nav have doc comments |
-| Color theme | 🔲 TODO | Rose/amber tones, not clinical blue |
+| Color theme | ✅ Done | "Soft Sanctuary" — rose palette, warm shadows, gradient accents, name-derived avatar colors |
+| Responsive layout | ✅ Done | Full-width desktop (no max-w), responsive padding, sticky sidebar, mobile card fallbacks |
 | Loading states | 🔲 TODO | Skeletons, spinners |
-| Responsive check | 🔲 TODO | All pages at 1440px |
 | Vercel deploy | 🔲 TODO | Push to GitHub, add env vars |
 
 ---
 
-## Frontend — Person A
+## Frontend — Person A — COMPLETE ✅
 
 | Page | Route | Status | Notes |
 |---|---|---|---|
-| Dashboard | `/dashboard` | 🔲 Scaffold | APIs wired. Build: PatientCard, FamilyAvatars, TaskList (CRUD dialogs), MedCountBadge, **ActivityFeed** |
-| Medication Tracker | `/medications` | 🔲 Scaffold | APIs wired. Build: **Checklist cards** with live dose counts, progress bar, add/edit/delete dialogs |
+| Dashboard | `/dashboard` | ✅ Done | PatientCard, FamilyAvatars (name-derived colors), TaskList (full CRUD + dialogs), MedCountBadge, ActivityFeed (timeline style) |
+| Medication Tracker | `/medications` | ✅ Done | Table (desktop) + cards (mobile), dose progress bars, **overdose warning dialog**, Add Medication dialog, stat summary cards |
 
 ---
 
@@ -108,8 +108,8 @@
 ## Demo Readiness
 
 ### V1 Checklist
-- [ ] Dashboard loads patient card + 3 family avatars + task list
-- [ ] Medication tracker shows 4 active meds with real dosages
+- [x] Dashboard loads patient card + 3 family avatars + task list
+- [x] Medication tracker shows 4 active meds with real dosages
 - [ ] Doctor notes feed shows 3 notes with visible jargon
 - [ ] "Explain in Tiếng Việt" → real Vietnamese translation in <8s
 - [ ] Language selector switches between 10 languages
@@ -120,12 +120,12 @@
 - [ ] Demo script run 3x without error
 
 ### V2 Checklist
-- [ ] User selection page shows 3 avatars + Add button
-- [ ] Selecting user → dashboard shows "Logged in as [Name]"
-- [ ] Task CRUD: create, edit, toggle complete, delete
-- [ ] Medication checklist with live dose counts (2/2 ✓)
-- [ ] "Confirm Given" on medication → logs who + when
+- [x] User selection page shows 3 avatars + Add button
+- [x] Selecting user → dashboard shows "Logged in as [Name]"
+- [x] Task CRUD: create, edit, toggle complete, delete
+- [x] Medication checklist with live dose counts (2/2 ✓) + overdose warning
+- [x] "Confirm Given" on medication → logs who + when
 - [ ] Photo scan: upload image → text extracted by Gemini
 - [ ] Add Note from scan → note appears, ready to translate
 - [ ] Summary translatable to Vietnamese/Spanish/etc.
-- [ ] Activity feed shows attributed actions on dashboard
+- [x] Activity feed shows attributed actions on dashboard (timeline style with color-coded dots)

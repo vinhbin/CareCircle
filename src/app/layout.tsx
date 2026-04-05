@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col bg-rose-50">
         <UserProvider>
           <Nav />
-          <main className="flex-1 px-6 py-8 max-w-5xl mx-auto w-full">{children}</main>
+          <main className="flex-1 px-4 sm:px-6 lg:px-10 xl:px-16 py-8 w-full">{children}</main>
         </UserProvider>
       </body>
     </html>
