@@ -1,14 +1,7 @@
-// PERSON B — AI Weekly Summary
+// AI WEEKLY SUMMARY — matches App Builder layout
 // GET  /api/summary            — Returns latest saved summary (or null)
 // POST /api/summary            — Generates new summary via Gemini, saves it
 // POST /api/summary/translate  — Translates summary text into any language via Gemini
-//
-// Components:
-//   SummaryCard  — narrative paragraph + "Watch For" section + action items list
-//   WeekBadge    — "Week of April 6, 2025"
-//   EmptyState   — "No summary yet" + "Generate This Week's Summary" button
-//   Skeleton     — animated loading card while POST is in-flight
-//   Language selector + "Translate" button → translated summary panel below
 
 'use client'
 
@@ -16,14 +9,27 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/lib/user-context'
 import { LANGUAGES } from '@/lib/languages'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
-  Sparkles, CalendarDays, AlertTriangle, ListChecks,
-  RefreshCw, Languages, ChevronRight, FileText
+  Sparkles, Calendar, CheckCircle2, AlertCircle
 } from 'lucide-react'
+
+/* ─── Language flags ─── */
+const LANGUAGE_FLAGS: Record<string, string> = {
+  'English': '🇺🇸',
+  'Tiếng Việt': '🇻🇳',
+  'Español': '🇪🇸',
+  '中文': '🇨🇳',
+  '한국어': '🇰🇷',
+  'Português': '🇧🇷',
+  'Tagalog': '🇵🇭',
+  'हिन्दी': '🇮🇳',
+  'العربية': '🇸🇦',
+  'Français': '🇫🇷',
+}
 
 type Summary = {
   summaryText: string
@@ -97,71 +103,69 @@ export default function SummaryPage() {
     }
   }
 
-  function formatWeekStart(dateStr?: string) {
+  function formatWeekRange(dateStr?: string) {
     if (!dateStr) return 'This Week'
-    const d = new Date(dateStr + 'T00:00:00')
-    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    const start = new Date(dateStr + 'T00:00:00')
+    const end = new Date(start)
+    end.setDate(end.getDate() + 6)
+    const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+    return `${fmt(start)} - ${fmt(end)}, ${start.getFullYear()}`
+  }
+
+  // Parse watch-for items from text (split by newlines or bullet points)
+  function parseListItems(text: string): string[] {
+    return text.split(/\n|•|·|-(?=\s)/).map(s => s.trim()).filter(Boolean)
   }
 
   if (!user) return null
 
   return (
-    <div className="max-w-6xl mx-auto pb-20 lg:pb-8 space-y-6 lg:space-y-8">
+    <div className="max-w-6xl mx-auto pb-20 lg:pb-8">
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-zinc-800 tracking-tight">Weekly Summary</h1>
-          <p className="text-sm text-zinc-400 mt-0.5">
-            AI-generated care overview for the whole family
-          </p>
+          <h1 className="text-3xl font-semibold text-[#0f172a] mb-2">AI Weekly Summary</h1>
+          <p className="text-[#64748b]">AI-generated overview of care activities</p>
         </div>
         {summary && !generating && (
           <Button
-            size="sm"
-            variant="outline"
             onClick={handleGenerate}
-            className="border-rose-200 text-rose-600 hover:bg-rose-50 self-start sm:self-auto"
+            className="rounded-xl bg-[#8b5cf6] hover:bg-[#8b5cf6]/90 hidden sm:flex"
           >
-            <RefreshCw data-icon="inline-start" className="size-3.5" /> Regenerate
+            <Sparkles size={18} />
+            Regenerate
           </Button>
         )}
       </div>
 
-      {/* Loading skeleton — initial page load */}
+      {/* Loading skeleton */}
       {initialLoading && (
-        <div className="space-y-4 animate-in fade-in duration-300">
-          <Card className="shadow-md shadow-zinc-100/50 overflow-hidden">
-            <div className="h-1.5 bg-gradient-to-r from-rose-300 via-rose-400 to-rose-300" />
-            <CardContent className="py-6 space-y-4">
+        <div className="space-y-4">
+          <Card className="rounded-2xl border-gray-200 shadow-sm">
+            <CardContent className="p-6 space-y-4">
               <Skeleton className="h-6 w-48" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
-              <div className="pt-4 space-y-3">
-                <Skeleton className="h-4 w-56" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-              <div className="pt-4 space-y-3">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-              </div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Generating skeleton — after clicking Generate */}
+      {/* Generating state */}
       {generating && (
-        <Card className="shadow-md shadow-rose-100/50 border-rose-100/60 overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-500">
-          <div className="h-1.5 bg-gradient-to-r from-rose-300 via-rose-400 to-rose-300 animate-pulse" />
-          <CardContent className="py-10 text-center">
-            <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-7 h-7 text-rose-400 animate-pulse" />
+        <Card className="rounded-2xl border-[#8b5cf6]/20 shadow-sm">
+          <CardContent className="p-12 text-center">
+            <div className="size-20 rounded-2xl bg-[#8b5cf6]/10 flex items-center justify-center mx-auto mb-6">
+              <Sparkles className="text-[#8b5cf6] animate-pulse" size={40} />
             </div>
-            <p className="text-sm font-medium text-zinc-700">Generating summary for your family...</p>
-            <p className="text-xs text-zinc-400 mt-1">AI is reviewing medications, notes, and tasks</p>
-            <div className="mt-6 mx-auto max-w-md space-y-3">
+            <h3 className="text-xl font-semibold text-[#0f172a] mb-3">
+              Generating Summary...
+            </h3>
+            <p className="text-[#64748b] mb-8 max-w-md mx-auto">
+              AI is reviewing medications, appointments, and care notes from this week.
+            </p>
+            <div className="mx-auto max-w-sm space-y-3">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
@@ -172,148 +176,175 @@ export default function SummaryPage() {
 
       {/* Empty state */}
       {!initialLoading && !summary && !generating && (
-        <div className="text-center py-16 animate-in fade-in slide-in-from-bottom-3 duration-500">
-          <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
-            <FileText className="w-7 h-7 text-rose-200" />
-          </div>
-          <p className="text-sm font-medium text-zinc-600">No summary generated yet</p>
-          <p className="text-xs text-zinc-400 mt-1 max-w-[280px] mx-auto">
-            Generate a weekly overview of Bà Lan&apos;s care — medications, doctor visits, and tasks — all in one place.
-          </p>
-          <Button
-            onClick={handleGenerate}
-            className="mt-5 bg-rose-500 hover:bg-rose-600 text-white shadow-sm shadow-rose-200/50"
-          >
-            <Sparkles data-icon="inline-start" className="size-4" />
-            Generate This Week&apos;s Summary
-          </Button>
-        </div>
+        <Card className="rounded-2xl border-[#8b5cf6]/20 shadow-sm">
+          <CardContent className="p-12 text-center">
+            <div className="size-20 rounded-2xl bg-[#8b5cf6]/10 flex items-center justify-center mx-auto mb-6">
+              <Sparkles className="text-[#8b5cf6]" size={40} />
+            </div>
+            <h3 className="text-xl font-semibold text-[#0f172a] mb-3">
+              No Summary Yet
+            </h3>
+            <p className="text-[#64748b] mb-8 max-w-md mx-auto">
+              Generate a comprehensive weekly summary that covers medications, appointments,
+              and important care notes.
+            </p>
+            <Button
+              onClick={handleGenerate}
+              size="lg"
+              className="rounded-xl bg-[#8b5cf6] hover:bg-[#8b5cf6]/90"
+            >
+              <Sparkles size={20} />
+              Generate This Week&apos;s Summary
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Summary card */}
+      {/* Summary content */}
       {summary && !generating && (
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px] 2xl:grid-cols-[1fr_420px] gap-6 lg:gap-8">
-          {/* Main summary content */}
-          <div className="space-y-4">
-            <Card className="shadow-md shadow-rose-100/50 border-rose-100/60 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="h-1.5 bg-gradient-to-r from-rose-300 via-rose-400 to-rose-300" />
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base text-zinc-800 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-rose-500" />
-                      Care Summary
-                    </CardTitle>
-                    <CardDescription className="text-xs mt-0.5">
-                      AI-generated overview of this week&apos;s care
-                    </CardDescription>
-                  </div>
-                  <Badge className="bg-rose-100 text-rose-600 hover:bg-rose-100 border-none text-[10px] font-semibold px-2.5 py-1 shrink-0">
-                    <CalendarDays className="w-3 h-3 mr-1" />
-                    Week of {formatWeekStart(summary.weekStart ?? summary.week_start)}
-                  </Badge>
-                </div>
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Main summary content — 2 cols */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Week badge */}
+            <div className="flex items-center gap-2">
+              <Badge className="bg-[#8b5cf6] text-white border-0 rounded-lg px-4 py-2">
+                <Calendar size={16} className="mr-2" />
+                {formatWeekRange(summary.weekStart ?? summary.week_start)}
+              </Badge>
+            </div>
+
+            {/* Weekly Overview card */}
+            <Card className="rounded-2xl border-[#8b5cf6]/10 shadow-sm shadow-[#8b5cf6]/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles size={20} className="text-[#8b5cf6]" />
+                  Weekly Overview
+                </CardTitle>
               </CardHeader>
-
-              <CardContent className="space-y-5">
-                <div>
-                  <p className="text-[13px] text-zinc-700 leading-relaxed">{summary.summaryText}</p>
+              <CardContent>
+                <div className="prose max-w-none">
+                  {summary.summaryText.split('\n\n').map((paragraph, idx) => (
+                    <p key={idx} className="text-[#0f172a] mb-4 last:mb-0 leading-relaxed">
+                      {paragraph}
+                    </p>
+                  ))}
                 </div>
-
-                {summary.watchFor && (
-                  <div className="bg-amber-50 rounded-xl p-4 border border-amber-200/60">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-500" />
-                      <p className="text-[10px] font-semibold text-amber-600 uppercase tracking-widest">Watch For</p>
-                    </div>
-                    <p className="text-[13px] text-amber-800 leading-relaxed">{summary.watchFor}</p>
-                  </div>
-                )}
-
-                {summary.actionItems && (
-                  <div className="bg-zinc-50 rounded-xl p-4 border border-zinc-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <ListChecks className="w-4 h-4 text-rose-400" />
-                      <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Action Items</p>
-                    </div>
-                    <p className="text-[13px] text-zinc-700 leading-relaxed whitespace-pre-line">{summary.actionItems}</p>
-                  </div>
-                )}
               </CardContent>
             </Card>
 
-            {/* Translated summary panel */}
-            {translatedText && (
-              <Card className="shadow-md shadow-violet-100/40 border-violet-100/60 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="h-1 bg-gradient-to-r from-violet-300 via-violet-400 to-violet-300" />
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base text-zinc-800 flex items-center gap-2">
-                      <Languages className="w-4 h-4 text-violet-500" />
-                      Translation
-                    </CardTitle>
-                    <Badge className="bg-violet-100 text-violet-600 hover:bg-violet-100 border-none text-[10px] font-semibold px-2 py-0.5">
-                      {translatedLang}
-                    </Badge>
-                  </div>
+            {/* Watch For card */}
+            {summary.watchFor && (
+              <Card className="rounded-2xl border-[#f59e0b]/20 shadow-sm shadow-[#f59e0b]/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-[#92400e]">
+                    <AlertCircle size={20} className="text-[#f59e0b]" />
+                    Watch For
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-[13px] text-zinc-700 leading-relaxed whitespace-pre-line">{translatedText}</p>
+                  <ul className="space-y-3">
+                    {parseListItems(summary.watchFor).map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <div className="size-1.5 rounded-full bg-[#f59e0b] mt-2 flex-shrink-0" />
+                        <span className="text-[#0f172a]">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Action Items card */}
+            {summary.actionItems && (
+              <Card className="rounded-2xl border-[#10b981]/20 shadow-sm shadow-[#10b981]/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-[#065f46]">
+                    <CheckCircle2 size={20} className="text-[#10b981]" />
+                    Action Items
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    {parseListItems(summary.actionItems).map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <div className="size-4 rounded border-2 border-[#cbd5e1] mt-0.5 flex-shrink-0" />
+                        <span className="text-[#0f172a]">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Translated summary panel */}
+            {translatedText && (
+              <Card className="rounded-2xl border-[#8b5cf6]/20 shadow-sm bg-gradient-to-br from-[#8b5cf6]/5 to-[#f59e0b]/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Badge className="bg-[#8b5cf6] text-white border-0 rounded-lg">
+                      <Sparkles size={12} className="mr-1" />
+                      AI Translated
+                    </Badge>
+                    <span className="text-sm font-normal text-[#64748b]">
+                      {LANGUAGE_FLAGS[translatedLang || ''] || '🌐'} {translatedLang}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose max-w-none">
+                    {translatedText.split('\n\n').map((paragraph, idx) => (
+                      <p key={idx} className="text-[#0f172a] mb-4 last:mb-0 leading-relaxed">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             )}
           </div>
 
           {/* Sidebar — Language selector */}
-          <div className="space-y-5 lg:sticky lg:top-24 lg:self-start">
-            <Card className="shadow-md shadow-rose-100/50 border-rose-100/60 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100 fill-mode-backwards">
-              <div className="h-1 bg-gradient-to-r from-violet-300 via-violet-400 to-violet-300" />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base text-zinc-800 flex items-center gap-2">
-                  <Languages className="w-4 h-4 text-violet-500" />
-                  Translate Summary
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Share the summary in the family&apos;s preferred language
-                </CardDescription>
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <Card className="rounded-2xl border-gray-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">Translate Summary</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-1.5">
-                  <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">Language</p>
-                  <select
-                    value={selectedLanguage}
-                    onChange={e => { setSelectedLanguage(e.target.value); setTranslatedText(null); setTranslatedLang(null) }}
-                    className="w-full text-sm font-medium text-zinc-800 bg-white border border-zinc-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all cursor-pointer"
-                  >
-                    {LANGUAGES.map(lang => (
-                      <option key={lang.code} value={lang.code}>{lang.label}</option>
-                    ))}
-                  </select>
+              <CardContent className="space-y-4">
+                {/* Language button list */}
+                <div className="space-y-2">
+                  {LANGUAGES.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => { setSelectedLanguage(lang.code); setTranslatedText(null); setTranslatedLang(null) }}
+                      className={`w-full px-4 py-3 rounded-xl border-2 transition-all text-left cursor-pointer ${
+                        selectedLanguage === lang.code
+                          ? 'border-[#8b5cf6] bg-[#8b5cf6]/10'
+                          : 'border-gray-200 hover:border-[#8b5cf6]/50'
+                      }`}
+                    >
+                      <span className="mr-3 text-xl">{LANGUAGE_FLAGS[lang.code] || '🌐'}</span>
+                      <span className="text-sm font-medium">{lang.label}</span>
+                    </button>
+                  ))}
                 </div>
 
                 <Button
                   onClick={handleTranslate}
                   disabled={translating}
-                  className="w-full bg-violet-500 hover:bg-violet-600 text-white shadow-sm shadow-violet-200/50"
+                  className="w-full rounded-xl bg-[#8b5cf6] hover:bg-[#8b5cf6]/90"
                 >
                   {translating ? (
                     <span className="flex items-center gap-2">
-                      <span className="w-3.5 h-3.5 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
+                      <span className="w-4 h-4 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
                       Translating...
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1.5">
-                      Translate to {selectedLanguage}
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </span>
+                    <>
+                      <Sparkles size={18} />
+                      Translate
+                    </>
                   )}
                 </Button>
-
-                {translatedLang && (
-                  <p className="text-[11px] text-zinc-400 text-center">
-                    Currently showing {translatedLang} translation
-                  </p>
-                )}
               </CardContent>
             </Card>
           </div>
