@@ -1,4 +1,4 @@
-// MEDICAL BINDER — Upload documents, Gemini auto-classifies, folder-based gallery
+// MEDICAL BINDER — matches App Builder layout
 // GET  /api/documents       — All documents with uploader joined
 // POST /api/documents       — Upload + classify + save
 // GET  /api/documents/[id]  — Signed URL for viewing
@@ -11,13 +11,13 @@ import { useRouter } from 'next/navigation'
 import { useUser } from '@/lib/user-context'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
-  FolderOpen, Plus, Upload, FileText, Trash2, Eye, Sparkles,
-  X, FlaskConical, Pill, CreditCard, ClipboardList, ScanLine, File,
-  ChevronRight, ArrowLeft,
+  FolderOpen, Upload, FileText, Trash2, Sparkles,
+  X, ChevronRight,
+  TestTube, Pill, FileSpreadsheet, Image as ImageIcon, Heart, File,
 } from 'lucide-react'
 
 type Document = {
@@ -31,13 +31,22 @@ type Document = {
   uploader: { id: number; name: string; avatar_url: string | null } | null
 }
 
-const CATEGORY_STYLES: Record<string, { bg: string; text: string; iconBg: string; icon: typeof FileText }> = {
-  'Lab Result':        { bg: 'bg-emerald-50', text: 'text-emerald-600', iconBg: 'bg-emerald-100', icon: FlaskConical },
-  'Prescription':      { bg: 'bg-violet-50',  text: 'text-violet-600',  iconBg: 'bg-violet-100',  icon: Pill },
-  'Insurance Card':    { bg: 'bg-sky-50',     text: 'text-sky-600',     iconBg: 'bg-sky-100',     icon: CreditCard },
-  'Discharge Summary': { bg: 'bg-amber-50',   text: 'text-amber-600',   iconBg: 'bg-amber-100',   icon: ClipboardList },
-  'Imaging/X-Ray':     { bg: 'bg-rose-50',    text: 'text-rose-600',    iconBg: 'bg-rose-100',    icon: ScanLine },
-  'Other':             { bg: 'bg-zinc-50',    text: 'text-zinc-600',    iconBg: 'bg-zinc-100',    icon: File },
+/* ─── Folder category config matching App Builder ─── */
+const FOLDER_CATEGORIES: Record<string, { icon: typeof FileText; color: string; bg: string; emoji: string }> = {
+  'Lab Result':        { icon: TestTube,       color: 'text-[#0ea5e9]', bg: 'bg-[#e0f2fe]', emoji: '📊' },
+  'Lab Results':       { icon: TestTube,       color: 'text-[#0ea5e9]', bg: 'bg-[#e0f2fe]', emoji: '📊' },
+  'Prescription':      { icon: Pill,           color: 'text-[#10b981]', bg: 'bg-[#d1fae5]', emoji: '💊' },
+  'Insurance Card':    { icon: FileSpreadsheet,color: 'text-[#f59e0b]', bg: 'bg-[#fef3c7]', emoji: '🏥' },
+  'Insurance':         { icon: FileSpreadsheet,color: 'text-[#f59e0b]', bg: 'bg-[#fef3c7]', emoji: '🏥' },
+  'Imaging/X-Ray':     { icon: ImageIcon,      color: 'text-[#8b5cf6]', bg: 'bg-[#ede9fe]', emoji: '🩻' },
+  'Imaging':           { icon: ImageIcon,      color: 'text-[#8b5cf6]', bg: 'bg-[#ede9fe]', emoji: '🩻' },
+  'Discharge Summary': { icon: Heart,          color: 'text-[#f43f5e]', bg: 'bg-[#ffe4e6]', emoji: '📋' },
+  'Cardiology':        { icon: Heart,          color: 'text-[#f43f5e]', bg: 'bg-[#ffe4e6]', emoji: '❤️' },
+  'Other':             { icon: File,           color: 'text-[#64748b]', bg: 'bg-[#f1f5f9]', emoji: '📄' },
+}
+
+function getCategoryStyle(category: string) {
+  return FOLDER_CATEGORIES[category] || FOLDER_CATEGORIES['Other']
 }
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/heic', 'image/heif', 'application/pdf']
@@ -173,7 +182,6 @@ export default function DocumentsPage() {
       await fetch(`/api/documents/${doc.id}`, { method: 'DELETE' })
       setDocuments(prev => prev.filter(d => d.id !== doc.id))
       if (viewDoc?.id === doc.id) setViewDoc(null)
-      // If folder is now empty, go back to folders view
       const remaining = documents.filter(d => d.id !== doc.id && d.category === openFolder)
       if (openFolder && remaining.length === 0) setOpenFolder(null)
     } catch {
@@ -191,65 +199,45 @@ export default function DocumentsPage() {
   if (!user) return null
 
   return (
-    <div className="max-w-6xl mx-auto pb-20 lg:pb-8 space-y-6 lg:space-y-8">
+    <div className="max-w-6xl mx-auto pb-20 lg:pb-8">
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-zinc-800 tracking-tight">Medical Binder</h1>
-          <p className="text-sm text-zinc-400 mt-0.5">
-            Upload medical documents. AI organizes them automatically.
-          </p>
+          <h1 className="text-3xl font-semibold text-[#0f172a] mb-2">Medical Binder</h1>
+          <p className="text-[#64748b]">Organize and access all medical documents</p>
         </div>
         <Button
-          size="sm"
           onClick={() => setUploadOpen(true)}
-          className="bg-rose-500 hover:bg-rose-600 text-white shadow-sm shadow-rose-200/50 self-start sm:self-auto"
+          className="rounded-xl bg-[#f43f5e] hover:bg-[#f43f5e]/90 hidden sm:flex"
         >
-          <Plus data-icon="inline-start" className="size-3.5" /> Upload Document
+          <Upload size={18} />
+          Upload Document
         </Button>
       </div>
 
-      {/* Stats bar */}
-      <Card className="shadow-md shadow-rose-100/50 border-rose-100/60 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 delay-75 fill-mode-backwards">
-        <div className="h-1.5 bg-gradient-to-r from-rose-300 via-rose-400 to-rose-300" />
-        <CardContent className="py-3.5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-rose-50 rounded-lg shrink-0">
-              <FolderOpen className="w-4.5 h-4.5 text-rose-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              {openFolder ? (
-                <button
-                  onClick={() => setOpenFolder(null)}
-                  className="flex items-center gap-1.5 text-sm cursor-pointer group"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5 text-zinc-400 group-hover:text-rose-500 transition-colors" />
-                  <span className="text-zinc-400 group-hover:text-rose-500 transition-colors font-medium">All Folders</span>
-                  <ChevronRight className="w-3 h-3 text-zinc-300" />
-                  <span className="font-semibold text-zinc-700">{openFolder}</span>
-                </button>
-              ) : (
-                <p className="text-sm font-medium text-zinc-600">
-                  {Object.keys(folders).length} folder{Object.keys(folders).length !== 1 ? 's' : ''}
-                </p>
-              )}
-            </div>
-            <Badge className="bg-rose-100 text-rose-600 hover:bg-rose-100 border-none text-[10px] font-semibold px-2 py-0.5 shrink-0">
-              {openFolder ? folderDocs.length : documents.length} doc{(openFolder ? folderDocs.length : documents.length) !== 1 ? 's' : ''}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Breadcrumb (when inside a folder) */}
+      {openFolder && (
+        <div className="mb-6">
+          <button
+            onClick={() => setOpenFolder(null)}
+            className="inline-flex items-center gap-2 text-[#64748b] hover:text-[#f43f5e] transition-colors cursor-pointer"
+          >
+            <span>All Folders</span>
+            <ChevronRight size={16} />
+            <span className="text-[#0f172a] font-medium">{openFolder}</span>
+          </button>
+        </div>
+      )}
 
       {/* Loading skeleton */}
       {initialLoading && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {[0, 1, 2, 3].map(i => (
-            <Card key={i} className="shadow-md shadow-zinc-100/50 animate-in fade-in duration-300" style={{ animationDelay: `${i * 100}ms` }}>
-              <CardContent className="py-8 space-y-3 flex flex-col items-center">
-                <Skeleton className="h-12 w-12 rounded-xl" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[0, 1, 2, 3, 4, 5].map(i => (
+            <Card key={i} className="rounded-2xl border-gray-200 shadow-sm">
+              <CardContent className="p-6 space-y-3">
+                <Skeleton className="h-14 w-14 rounded-2xl" />
+                <Skeleton className="h-5 w-32" />
                 <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-3 w-16" />
               </CardContent>
             </Card>
           ))}
@@ -258,45 +246,49 @@ export default function DocumentsPage() {
 
       {/* Empty state */}
       {!initialLoading && documents.length === 0 && (
-        <div className="text-center py-16 animate-in fade-in slide-in-from-bottom-3 duration-500">
-          <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
-            <FolderOpen className="w-7 h-7 text-rose-200" />
+        <div className="text-center py-16">
+          <div className="size-16 rounded-2xl bg-[#f1f5f9] flex items-center justify-center mx-auto mb-4">
+            <FolderOpen className="text-[#94a3b8]" size={32} />
           </div>
-          <p className="text-sm font-medium text-zinc-600">No documents yet</p>
-          <p className="text-xs text-zinc-400 mt-1 max-w-[260px] mx-auto">Upload a lab result, prescription, or insurance card — AI will classify it into folders for you</p>
+          <h3 className="text-xl font-semibold text-[#0f172a] mb-2">No documents yet</h3>
+          <p className="text-[#64748b] max-w-[300px] mx-auto">
+            Upload a lab result, prescription, or insurance card — AI will classify it into folders for you
+          </p>
           <Button
-            size="sm"
             onClick={() => setUploadOpen(true)}
-            className="mt-4 bg-rose-500 hover:bg-rose-600 text-white shadow-sm shadow-rose-200/50"
+            className="mt-5 rounded-xl bg-[#f43f5e] hover:bg-[#f43f5e]/90"
           >
-            <Plus data-icon="inline-start" className="size-3.5" /> Upload First Document
+            <Upload size={18} />
+            Upload First Document
           </Button>
         </div>
       )}
 
       {/* ─── FOLDERS VIEW ─── */}
       {!initialLoading && !openFolder && Object.keys(folders).length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {Object.entries(folders).map(([category, docs], i) => {
-            const style = CATEGORY_STYLES[category] || CATEGORY_STYLES['Other']
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Object.entries(folders).map(([category, docs]) => {
+            const style = getCategoryStyle(category)
             const Icon = style.icon
             return (
               <button
                 key={category}
                 onClick={() => setOpenFolder(category)}
-                className="text-left cursor-pointer animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-backwards"
-                style={{ animationDelay: `${150 + i * 80}ms` }}
+                className="text-left cursor-pointer"
               >
-                <Card className="shadow-md shadow-zinc-100/50 border-zinc-100/60 overflow-hidden transition-all hover:border-rose-200 hover:shadow-rose-100/40 hover:scale-[1.02] h-full">
-                  <CardContent className="py-6 flex flex-col items-center text-center gap-3">
-                    <div className={`w-14 h-14 rounded-2xl ${style.iconBg} flex items-center justify-center`}>
-                      <Icon className={`w-7 h-7 ${style.text}`} />
+                <Card className="rounded-2xl border-gray-200 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all">
+                  <CardContent className="p-6">
+                    <div className={`size-14 rounded-2xl ${style.bg} flex items-center justify-center mb-4`}>
+                      <Icon className={style.color} size={28} />
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-zinc-700">{category}</p>
-                      <p className="text-[11px] text-zinc-400 mt-0.5">
-                        {docs.length} document{docs.length !== 1 ? 's' : ''}
+                    <h3 className="font-semibold text-[#0f172a] mb-2 text-lg">
+                      {category}
+                    </h3>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-[#64748b]">
+                        {docs.length} {docs.length === 1 ? 'document' : 'documents'}
                       </p>
+                      <ChevronRight size={20} className="text-[#64748b]" />
                     </div>
                   </CardContent>
                 </Card>
@@ -308,68 +300,41 @@ export default function DocumentsPage() {
 
       {/* ─── FOLDER CONTENTS VIEW ─── */}
       {!initialLoading && openFolder && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {folderDocs.map((doc, i) => {
-            const style = CATEGORY_STYLES[doc.category] || CATEGORY_STYLES['Other']
-            const Icon = style.icon
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {folderDocs.map((doc) => {
+            const style = getCategoryStyle(doc.category)
             return (
               <Card
                 key={doc.id}
-                className="shadow-md shadow-zinc-100/50 border-zinc-100/60 overflow-hidden transition-all hover:border-rose-200 hover:shadow-rose-100/40 group animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-backwards"
-                style={{ animationDelay: `${100 + i * 80}ms` }}
+                className="rounded-2xl border-gray-200 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                onClick={() => handleView(doc)}
               >
-                {/* Card top — clickable area */}
-                <button
-                  onClick={() => handleView(doc)}
-                  className="w-full text-left cursor-pointer"
-                >
-                  <div className="h-32 bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-50 flex items-center justify-center border-b border-zinc-100 group-hover:from-rose-50/50 group-hover:to-rose-50/30 transition-colors">
-                    {doc.mime_type.startsWith('image/') ? (
-                      <div className="flex flex-col items-center gap-2 text-zinc-300">
-                        <Icon className="w-8 h-8" />
-                        <span className="text-[10px] font-medium uppercase tracking-wider">Image</span>
+                <CardContent className="p-6">
+                  <div className="flex gap-4">
+                    {/* Emoji thumbnail */}
+                    <div className="size-16 rounded-xl bg-[#f8fafc] flex items-center justify-center text-3xl flex-shrink-0">
+                      {style.emoji}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-[#0f172a] mb-2 line-clamp-1">
+                        {doc.ai_description || doc.file_name}
+                      </h3>
+                      <Badge className={`${style.bg} ${style.color} border-0 rounded-lg mb-2`}>
+                        {doc.category}
+                      </Badge>
+                      <p className="text-sm text-[#64748b] mb-3 line-clamp-2">
+                        {doc.ai_description || doc.file_name}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-[#64748b]">
+                        <span>{formatDate(doc.created_at)}</span>
+                        {doc.uploader && (
+                          <>
+                            <span>•</span>
+                            <span>By {doc.uploader.name.split(' ')[0]}</span>
+                          </>
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-2 text-zinc-300">
-                        <FileText className="w-8 h-8" />
-                        <span className="text-[10px] font-medium uppercase tracking-wider">PDF</span>
-                      </div>
-                    )}
-                  </div>
-                </button>
-
-                <CardContent className="py-3.5 space-y-2.5">
-                  {/* Category badge + delete */}
-                  <div className="flex items-center justify-between">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${style.bg} ${style.text}`}>
-                      <Icon className="w-3 h-3" />
-                      {doc.category}
-                    </span>
-                    <button
-                      onClick={() => handleDelete(doc)}
-                      disabled={deleting === doc.id}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-zinc-300 hover:text-rose-500 hover:bg-rose-50 transition-all cursor-pointer disabled:opacity-50"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  {/* AI description */}
-                  <p className="text-[13px] font-medium text-zinc-700 leading-snug line-clamp-2">
-                    {doc.ai_description || doc.file_name}
-                  </p>
-
-                  {/* Meta row */}
-                  <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                    <span>{formatDate(doc.created_at)}</span>
-                    {doc.uploader && (
-                      <span className="flex items-center gap-1">
-                        <span className="w-4 h-4 rounded-full bg-rose-200 flex items-center justify-center text-[8px] font-bold text-rose-700">
-                          {doc.uploader.name.charAt(0)}
-                        </span>
-                        {doc.uploader.name.split(' ')[0]}
-                      </span>
-                    )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -380,147 +345,183 @@ export default function DocumentsPage() {
 
       {/* ─── Upload Dialog ─── */}
       <Dialog open={uploadOpen} onOpenChange={(open) => { setUploadOpen(open); if (!open) setSelectedFile(null) }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="rounded-2xl max-w-lg">
           <DialogHeader>
-            <DialogTitle>Upload Document</DialogTitle>
+            <DialogTitle className="text-xl">Upload Document</DialogTitle>
+            <DialogDescription>
+              Upload a medical document and let AI categorize it automatically
+            </DialogDescription>
           </DialogHeader>
 
-          {!selectedFile ? (
-            <div className="border-2 border-dashed border-zinc-200 rounded-xl p-8 text-center hover:border-rose-300 transition-colors">
-              <input
-                type="file"
-                accept="image/*,.pdf,.avif"
-                onChange={handleFileSelect}
-                className="hidden"
-                id="doc-file-input"
-              />
-              <label htmlFor="doc-file-input" className="cursor-pointer">
-                <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-3">
-                  <Upload className="w-6 h-6 text-rose-400" />
-                </div>
-                <p className="text-sm font-medium text-zinc-600">Click to select a file</p>
-                <p className="text-[11px] text-zinc-400 mt-1">Images (JPG, PNG, HEIC) or PDF · Max 10 MB</p>
-              </label>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {selectedFile.preview ? (
-                <div className="rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={selectedFile.preview} alt="Preview" className="w-full max-h-56 object-cover" />
-                </div>
-              ) : (
-                <div className="rounded-xl border border-zinc-200 p-6 flex items-center gap-3 bg-zinc-50">
-                  <FileText className="w-8 h-8 text-zinc-400" />
-                  <div>
-                    <p className="text-sm font-medium text-zinc-700">{selectedFile.name}</p>
-                    <p className="text-[11px] text-zinc-400">PDF document</p>
+          <div className="space-y-4 mt-4">
+            {!selectedFile ? (
+              <div className="border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center hover:border-[#f43f5e] transition-colors cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*,.pdf,.avif"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="doc-file-input"
+                />
+                <label htmlFor="doc-file-input" className="cursor-pointer">
+                  <Upload size={48} className="mx-auto text-[#64748b] mb-4" />
+                  <p className="text-[#0f172a] font-medium mb-2">
+                    Drop file here or click to upload
+                  </p>
+                  <p className="text-sm text-[#64748b]">
+                    PDF, PNG, JPG up to 10MB
+                  </p>
+                </label>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {selectedFile.preview ? (
+                  <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={selectedFile.preview} alt="Preview" className="w-full max-h-56 object-cover" />
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="rounded-xl border border-gray-200 p-6 flex items-center gap-3 bg-[#f8fafc]">
+                    <FileText className="w-8 h-8 text-[#64748b]" />
+                    <div>
+                      <p className="text-sm font-medium text-[#0f172a]">{selectedFile.name}</p>
+                      <p className="text-xs text-[#64748b]">PDF document</p>
+                    </div>
+                  </div>
+                )}
 
-              <div className="flex items-center gap-2 bg-amber-50 border border-amber-200/60 rounded-lg p-2.5 text-[11px] text-amber-700">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                AI will automatically classify this document
+                <button
+                  onClick={() => setSelectedFile(null)}
+                  className="text-sm font-medium text-[#64748b] hover:text-[#0f172a] cursor-pointer transition-colors"
+                >
+                  Choose a different file
+                </button>
               </div>
+            )}
 
-              <button
-                onClick={() => setSelectedFile(null)}
-                className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 cursor-pointer transition-colors"
-              >
-                Choose a different file
-              </button>
-            </div>
-          )}
-
-          {uploading && (
-            <div className="flex items-center gap-3 text-sm bg-amber-50 border border-amber-200/60 rounded-xl p-3.5">
-              <span className="w-4.5 h-4.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin shrink-0" />
-              <div>
-                <p className="font-medium text-amber-700">Uploading &amp; classifying...</p>
-                <p className="text-[11px] text-amber-500 mt-0.5">Gemini is analyzing your document</p>
+            {/* AI classification info */}
+            <div className="bg-[#ede9fe] rounded-xl p-4 flex items-start gap-3">
+              <Sparkles className="text-[#8b5cf6] mt-0.5" size={20} />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-[#0f172a] mb-1">
+                  AI Classification
+                </p>
+                <p className="text-sm text-[#64748b]">
+                  Your document will be automatically categorized and a description will be generated
+                </p>
               </div>
             </div>
-          )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setUploadOpen(false); setSelectedFile(null) }}>
-              Cancel
-            </Button>
+            {uploading && (
+              <div className="flex items-center gap-3 text-sm bg-[#ede9fe] border border-[#8b5cf6]/20 rounded-xl p-4">
+                <span className="w-5 h-5 border-2 border-[#8b5cf6] border-t-transparent rounded-full animate-spin shrink-0" />
+                <p className="font-medium text-[#0f172a]">Uploading &amp; classifying with AI...</p>
+              </div>
+            )}
+
             <Button
               onClick={handleUpload}
               disabled={uploading || !selectedFile}
-              className="bg-rose-500 hover:bg-rose-600 text-white"
+              className="w-full rounded-xl bg-[#f43f5e] hover:bg-[#f43f5e]/90"
             >
-              {uploading ? 'Uploading...' : 'Upload'}
+              {uploading ? 'Uploading...' : 'Upload & Classify'}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* ─── View Document Dialog ─── */}
       <Dialog open={!!viewDoc} onOpenChange={(open) => { if (!open) { setViewDoc(null); setViewUrl(null) } }}>
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="rounded-2xl max-w-4xl max-h-[90vh] overflow-y-auto">
           {viewDoc && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-rose-400" />
+                <DialogTitle className="text-xl pr-8">
                   {viewDoc.ai_description || viewDoc.file_name}
                 </DialogTitle>
-              </DialogHeader>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-3 pt-2">
                   {(() => {
-                    const style = CATEGORY_STYLES[viewDoc.category] || CATEGORY_STYLES['Other']
-                    const Icon = style.icon
+                    const style = getCategoryStyle(viewDoc.category)
                     return (
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${style.bg} ${style.text}`}>
-                        <Icon className="w-3 h-3" />
+                      <Badge className={`${style.bg} ${style.color} border-0 rounded-lg`}>
                         {viewDoc.category}
-                      </span>
+                      </Badge>
                     )
                   })()}
-                  <span className="text-[11px] text-zinc-400">{formatDate(viewDoc.created_at)}</span>
+                  <span className="text-sm text-[#64748b]">{formatDate(viewDoc.created_at)}</span>
                   {viewDoc.uploader && (
-                    <span className="text-[11px] text-zinc-400">· Uploaded by {viewDoc.uploader.name}</span>
+                    <>
+                      <span className="text-sm text-[#64748b]">•</span>
+                      <span className="text-sm text-[#64748b]">Uploaded by {viewDoc.uploader.name}</span>
+                    </>
                   )}
                 </div>
+              </DialogHeader>
 
+              <div className="mt-4">
+                {/* AI Description */}
+                <div className="bg-[#ede9fe] rounded-xl p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="text-[#8b5cf6] mt-0.5" size={20} />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-[#0f172a] mb-1">
+                        AI-Generated Description
+                      </p>
+                      <p className="text-sm text-[#64748b]">
+                        {viewDoc.ai_description || 'No description available'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Document preview */}
                 {viewLoading ? (
                   <div className="flex items-center justify-center py-16">
-                    <span className="w-6 h-6 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
+                    <span className="w-6 h-6 border-2 border-[#f43f5e] border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : viewUrl ? (
                   viewDoc.mime_type.startsWith('image/') ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={viewUrl} alt={viewDoc.ai_description || viewDoc.file_name} className="w-full rounded-lg border border-zinc-200 shadow-sm" />
+                    <img src={viewUrl} alt={viewDoc.ai_description || viewDoc.file_name} className="w-full rounded-lg border border-gray-200 shadow-sm" />
                   ) : (
-                    <iframe src={viewUrl} title={viewDoc.file_name} className="w-full h-[60vh] rounded-lg border border-zinc-200" />
+                    <iframe src={viewUrl} title={viewDoc.file_name} className="w-full h-[60vh] rounded-lg border border-gray-200" />
                   )
-                ) : null}
+                ) : (
+                  <div className="bg-[#f8fafc] rounded-2xl p-12 text-center border-2 border-gray-200">
+                    <div className="text-6xl mb-4">{getCategoryStyle(viewDoc.category).emoji}</div>
+                    <p className="text-[#64748b]">Document preview</p>
+                  </div>
+                )}
               </div>
 
-              <DialogFooter className="flex-row justify-between sm:justify-between">
+              <DialogFooter className="flex-row justify-between sm:justify-between mt-4">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDelete(viewDoc)}
                   disabled={deleting === viewDoc.id}
-                  className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 border-rose-200"
+                  className="text-[#f43f5e] hover:text-[#f43f5e] hover:bg-[#fff1f2] border-[#f43f5e]/30"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                   {deleting === viewDoc.id ? 'Deleting...' : 'Delete'}
                 </Button>
                 <Button variant="outline" onClick={() => { setViewDoc(null); setViewUrl(null) }}>
-                  <X className="w-3.5 h-3.5" /> Close
+                  <X className="w-4 h-4" /> Close
                 </Button>
               </DialogFooter>
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Mobile FAB */}
+      <Button
+        onClick={() => setUploadOpen(true)}
+        size="lg"
+        className="sm:hidden fixed bottom-20 right-4 size-14 rounded-full shadow-lg bg-[#f43f5e] hover:bg-[#f43f5e]/90 z-30"
+      >
+        <Upload size={24} />
+      </Button>
     </div>
   )
 }
