@@ -4,33 +4,24 @@
 
 ---
 
-## Feature 1: Emergency QR Card (~30 min)
+## Feature 1: Emergency QR Card (~30 min) — COMPLETE ✅
 
 Hardcoded static page at `/emergency/ba-lan` with Bà Lan's critical medical info. ER-optimized: bold red header, high-contrast, large type, print-friendly.
 
 ### Architecture
 
-- `src/app/emergency/ba-lan/page.tsx` — server component, zero API calls, all data inline
+- `src/app/emergency/ba-lan/page.tsx` — client component, zero API calls, all data inline
 - `src/app/emergency/ba-lan/layout.tsx` — minimal layout, no Nav, no UserProvider
-- Dashboard gets "Emergency Card" button → dialog with QR code (`qrcode` package)
-- Nav already hides for `/emergency` routes (patched)
+- Dashboard "Emergency Card" button → QR code dialog via `qrcode` package
+- Nav hides for `/emergency` routes (patched)
 
-### Hardcoded data
+### What was built
 
-- Name: Bà Lan Nguyen, 70
-- Diagnosis: Type 2 Diabetes, Hypertension
-- Allergies: Sulfa drugs, Shellfish
-- Primary Language: Vietnamese
-- Medications: Metformin 1000mg, Lisinopril 20mg, Glipizide 10mg, Amlodipine 5mg
-- Emergency Contact: Minh Nguyen (son)
-- Primary Doctor: Dr. Sarah Chen, Endocrinology
-
-### Visual
-
-- Header: `#DC2626` red with white text "EMERGENCY MEDICAL INFORMATION"
-- High-contrast black on white sections
-- 16px+ type throughout
-- `@media print` CSS for clean printout
+- [x] Hardcoded emergency page with clinical ER red/white design
+- [x] Sections: Patient Info, Primary Language (prominent blue), Allergies (red highlight), Medications (table), Emergency Contact, Primary Doctor
+- [x] Print-friendly CSS (`@media print`)
+- [x] Dashboard button generates QR code → dialog with scan + link
+- [x] QR scans on phone → opens emergency page
 
 ---
 
