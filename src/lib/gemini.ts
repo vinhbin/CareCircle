@@ -2,6 +2,7 @@
 // translateNote()        — medical jargon → plain language in any of 10 languages
 // generateWeeklySummary() — narrative weekly care digest from meds/notes/tasks context
 // extractTextFromImage()  — multimodal OCR: photo of paper note → extracted text
+// transcribeAudio()       — multimodal: audio recording → transcribed text
 // translateText()         — plain text translation for summaries
 
 import { GoogleGenerativeAI } from '@google/generative-ai'
@@ -79,6 +80,14 @@ Respond ONLY as valid JSON with no markdown, no code fences, no extra text: { "s
 export async function extractTextFromImage(base64Data: string, mimeType: string): Promise<string> {
   const result = await model.generateContent([
     { text: 'Extract all text from this medical document exactly as written. Return only the extracted text, no commentary or formatting.' },
+    { inlineData: { mimeType, data: base64Data } },
+  ])
+  return result.response.text()
+}
+
+export async function transcribeAudio(base64Data: string, mimeType: string): Promise<string> {
+  const result = await model.generateContent([
+    { text: 'Transcribe this audio recording of a medical visit or voice memo. Return only the transcribed text exactly as spoken, no commentary or formatting.' },
     { inlineData: { mimeType, data: base64Data } },
   ])
   return result.response.text()

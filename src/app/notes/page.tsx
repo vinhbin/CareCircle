@@ -12,7 +12,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { LANGUAGES } from '@/lib/languages'
 import { useUser } from '@/lib/user-context'
@@ -26,7 +26,7 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   FileText, Languages, Plus, Stethoscope, CalendarDays,
-  Camera, Upload, Sparkles, ChevronRight
+  Camera, Upload, Sparkles, ChevronRight, Mic, Square, Play, Pause
 } from 'lucide-react'
 
 type Translation = { translation: string; actionItems: string; language?: string }
@@ -51,13 +51,106 @@ export default function NotesPage() {
 
   // Add Note dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<'manual' | 'scan'>('manual')
+  const [activeTab, setActiveTab] = useState<'manual' | 'scan' | 'voice'>('manual')
   const [noteForm, setNoteForm] = useState({ doctor_name: '', specialty: '', visit_date: '', raw_notes: '' })
   const [saving, setSaving] = useState(false)
 
   // Scan state
   const [scanning, setScanning] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+
+  // Voice memo state
+  const [recording, setRecording] = useState(false)
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [transcribing, setTranscribing] = useState(false)
+  const [elapsed, setElapsed] = useState(0)
+  const [audioPlaying, setAudioPlaying] = useState(false)
+  const [elapsedTimer, setElapsedTimer] = useState<ReturnType<typeof setInterval> | null>(null)
+  const audioPreviewRef = useRef<HTMLAudioElement>(null)
+
+  async function handleStartRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+      const recorder = new MediaRecorder(stream, { mimeType })
+      const chunks: BlobPart[] = []
+
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data) }
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(chunks, { type: mimeType })
+        setAudioBlob(blob)
+        setAudioUrl(URL.createObjectURL(blob))
+      }
+
+      recorder.start()
+      setMediaRecorder(recorder)
+      setRecording(true)
+      setElapsed(0)
+      setAudioBlob(null)
+      setAudioUrl(null)
+      setNoteForm(f => ({ ...f, raw_notes: '' }))
+
+      const timer = setInterval(() => setElapsed(s => s + 1), 1000)
+      setElapsedTimer(timer)
+    } catch {
+      alert('Microphone access denied. Please allow microphone access and try again.')
+    }
+  }
+
+  function handleStopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop()
+    }
+    setRecording(false)
+    if (elapsedTimer) { clearInterval(elapsedTimer); setElapsedTimer(null) }
+  }
+
+  async function handleTranscribe() {
+    if (!audioBlob) return
+    setTranscribing(true)
+    try {
+      const reader = new FileReader()
+      const base64 = await new Promise<string>((resolve) => {
+        reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.readAsDataURL(audioBlob)
+      })
+
+      const res = await fetch('/api/notes/transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audio: base64, mimeType: audioBlob.type }),
+      })
+      const { transcribedText, error } = await res.json()
+      if (transcribedText) {
+        setNoteForm(f => ({ ...f, raw_notes: transcribedText }))
+      } else {
+        alert(error || 'Transcription unavailable — type your notes manually')
+      }
+    } catch {
+      alert('Transcription failed. Please type your notes manually.')
+    } finally {
+      setTranscribing(false)
+    }
+  }
+
+  function formatElapsed(seconds: number) {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0')
+    const s = (seconds % 60).toString().padStart(2, '0')
+    return `${m}:${s}`
+  }
+
+  function resetVoiceState() {
+    if (audioUrl) URL.revokeObjectURL(audioUrl)
+    setAudioBlob(null)
+    setAudioUrl(null)
+    setRecording(false)
+    setElapsed(0)
+    setAudioPlaying(false)
+    if (elapsedTimer) { clearInterval(elapsedTimer); setElapsedTimer(null) }
+  }
 
   useEffect(() => {
     if (!user) router.replace('/')
@@ -353,7 +446,7 @@ export default function NotesPage() {
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              Manual Entry
+              Manual
             </button>
             <button
               onClick={() => setActiveTab('scan')}
@@ -365,6 +458,17 @@ export default function NotesPage() {
             >
               <Camera className="w-3.5 h-3.5" />
               Scan Photo
+            </button>
+            <button
+              onClick={() => setActiveTab('voice')}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all cursor-pointer ${
+                activeTab === 'voice'
+                  ? 'bg-white text-zinc-800 shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-700'
+              }`}
+            >
+              <Mic className="w-3.5 h-3.5" />
+              Voice Memo
             </button>
           </div>
 
@@ -469,6 +573,123 @@ export default function NotesPage() {
                     onChange={e => setNoteForm(f => ({ ...f, raw_notes: e.target.value }))}
                     rows={6}
                   />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Voice Memo tab — record → stop → transcribe → edit */}
+          {activeTab === 'voice' && (
+            <div className="space-y-3">
+              {/* Recording controls */}
+              {!audioBlob && !recording && (
+                <div className="text-center py-6">
+                  <button
+                    onClick={handleStartRecording}
+                    className="group w-20 h-20 rounded-full bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-200/60 flex items-center justify-center mx-auto transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                  >
+                    <Mic className="w-8 h-8 text-white" />
+                  </button>
+                  <p className="text-sm font-medium text-zinc-600 mt-3">Tap to start recording</p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">Record your voice memo from the visit</p>
+                </div>
+              )}
+
+              {/* Recording in progress */}
+              {recording && (
+                <div className="text-center py-6 animate-in fade-in duration-300">
+                  <div className="relative mx-auto w-20 h-20">
+                    <div className="absolute inset-0 rounded-full bg-rose-400/20 animate-ping pointer-events-none" />
+                    <button
+                      onClick={handleStopRecording}
+                      className="relative w-20 h-20 rounded-full bg-rose-500 shadow-lg shadow-rose-200/60 flex items-center justify-center mx-auto cursor-pointer hover:bg-rose-600 transition-colors"
+                    >
+                      <Square className="w-7 h-7 text-white fill-white" />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 mt-3">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                    <span className="text-sm font-semibold text-rose-600 tabular-nums">{formatElapsed(elapsed)}</span>
+                    <span className="text-sm text-zinc-500">Recording...</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Audio playback + transcribe */}
+              {audioBlob && !recording && (
+                <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="bg-zinc-50 rounded-xl p-4 border border-zinc-100">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => {
+                          const audio = audioPreviewRef.current
+                          if (!audio) return
+                          if (audioPlaying) { audio.pause(); audio.currentTime = 0; setAudioPlaying(false) }
+                          else { audio.play(); setAudioPlaying(true) }
+                        }}
+                        className="w-10 h-10 rounded-full bg-rose-500 hover:bg-rose-600 flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                      >
+                        {audioPlaying ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-zinc-700">Voice Memo</p>
+                        <p className="text-[11px] text-zinc-400">{formatElapsed(elapsed)} recorded</p>
+                      </div>
+                      <button
+                        onClick={() => { resetVoiceState(); setNoteForm(f => ({ ...f, raw_notes: '' })) }}
+                        className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 cursor-pointer transition-colors"
+                      >
+                        Re-record
+                      </button>
+                    </div>
+                    {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                    <audio
+                      ref={audioPreviewRef}
+                      src={audioUrl ?? undefined}
+                      onEnded={() => setAudioPlaying(false)}
+                      className="hidden"
+                    />
+                  </div>
+
+                  {/* Transcribe button */}
+                  {!noteForm.raw_notes && !transcribing && (
+                    <Button
+                      onClick={handleTranscribe}
+                      className="w-full bg-rose-500 hover:bg-rose-600 text-white shadow-sm shadow-rose-200/50"
+                      size="sm"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Transcribe with AI
+                    </Button>
+                  )}
+
+                  {/* Transcribing spinner */}
+                  {transcribing && (
+                    <div className="flex items-center gap-3 text-sm bg-amber-50 border border-amber-200/60 rounded-xl p-3.5">
+                      <span className="w-4.5 h-4.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin shrink-0" />
+                      <div>
+                        <p className="font-medium text-amber-700">Transcribing audio...</p>
+                        <p className="text-[11px] text-amber-500 mt-0.5">Gemini is converting speech to text</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Transcribed text — editable */}
+                  {noteForm.raw_notes && activeTab === 'voice' && !transcribing && (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="transcribed_notes" className="flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-rose-400" />
+                        Transcribed Text
+                        <span className="text-zinc-400 font-normal">(review &amp; edit)</span>
+                      </Label>
+                      <Textarea
+                        id="transcribed_notes"
+                        value={noteForm.raw_notes}
+                        onChange={e => setNoteForm(f => ({ ...f, raw_notes: e.target.value }))}
+                        rows={6}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
