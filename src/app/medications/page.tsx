@@ -150,13 +150,13 @@ export default function MedicationsPage() {
             Prescriptions, doses, and supplement tracking
           </p>
         </div>
-        <Button size="sm" onClick={() => setAddDialogOpen(true)} className="bg-rose-500 hover:bg-rose-600 text-white shadow-sm shadow-rose-200/50">
+        <Button data-tour="add-med" size="sm" onClick={() => setAddDialogOpen(true)} className="bg-rose-500 hover:bg-rose-600 text-white shadow-sm shadow-rose-200/50">
           <Plus data-icon="inline-start" className="size-3.5" /> Add Medication
         </Button>
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-3 lg:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-75 fill-mode-backwards">
+      <div data-tour="med-stats" className="grid grid-cols-3 gap-3 lg:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-75 fill-mode-backwards">
         {[
           { label: 'Total', value: meds.length, icon: Pill, bg: 'bg-rose-50', iconColor: 'text-rose-500', valueColor: 'text-rose-700' },
           { label: 'Active', value: activeCount, icon: Activity, bg: 'bg-emerald-50', iconColor: 'text-emerald-500', valueColor: 'text-emerald-700' },
@@ -179,7 +179,7 @@ export default function MedicationsPage() {
       </div>
 
       {/* ─── Desktop Table ─── */}
-      <Card className="shadow-md shadow-rose-100/50 border-rose-100/60 overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-500 delay-150 fill-mode-backwards hidden lg:block">
+      <Card data-tour="med-table" className="shadow-md shadow-rose-100/50 border-rose-100/60 overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-500 delay-150 fill-mode-backwards hidden lg:block">
         <div className="h-1.5 bg-gradient-to-r from-rose-300 via-rose-400 to-rose-300" />
         <CardHeader className="pb-3">
           <CardTitle className="text-base text-zinc-800">All Prescriptions</CardTitle>

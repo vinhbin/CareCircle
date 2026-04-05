@@ -69,7 +69,7 @@ function PatientInfoCard({ patient }: { patient: Patient }) {
     : []
 
   return (
-    <Card className="rounded-2xl border-[#f43f5e]/10 shadow-sm shadow-[#f43f5e]/5">
+    <Card data-tour="patient-card" className="rounded-2xl border-[#f43f5e]/10 shadow-sm shadow-[#f43f5e]/5">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Patient Information</span>
@@ -120,7 +120,7 @@ function PatientInfoCard({ patient }: { patient: Patient }) {
 /* ─── Family Care Team (horizontal avatars) ─── */
 function FamilyCareTeam({ members }: { members: FamilyMember[] }) {
   return (
-    <Card className="rounded-2xl border-gray-200 shadow-sm">
+    <Card data-tour="care-team" className="rounded-2xl border-gray-200 shadow-sm">
       <CardHeader>
         <CardTitle>Family Care Team</CardTitle>
       </CardHeader>
@@ -240,11 +240,11 @@ function TaskList({
 
   return (
     <>
-      <Card className="rounded-2xl border-gray-200 shadow-sm">
+      <Card data-tour="task-list" className="rounded-2xl border-gray-200 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Tasks</span>
-            <Button size="sm" onClick={openAdd} className="rounded-xl bg-[#f43f5e] hover:bg-[#f43f5e]/90">
+            <Button data-tour="add-task" size="sm" onClick={openAdd} className="rounded-xl bg-[#f43f5e] hover:bg-[#f43f5e]/90">
               <Plus size={18} />
               Add Task
             </Button>
@@ -433,7 +433,7 @@ function TaskList({
 /* ─── Medication Count Card ─── */
 function MedCountCard({ count }: { count: number }) {
   return (
-    <Card className="rounded-2xl border-[#0ea5e9]/10 shadow-sm shadow-[#0ea5e9]/5">
+    <Card data-tour="med-count" className="rounded-2xl border-[#0ea5e9]/10 shadow-sm shadow-[#0ea5e9]/5">
       <CardContent className="p-6">
         <div className="flex items-center gap-4">
           <div className="size-14 rounded-2xl bg-[#0ea5e9]/10 flex items-center justify-center">
@@ -472,7 +472,7 @@ function ActivityFeed({ activity }: { activity: ActivityEntry[] }) {
   }
 
   return (
-    <Card className="rounded-2xl border-gray-200 shadow-sm">
+    <Card data-tour="activity-feed" className="rounded-2xl border-gray-200 shadow-sm">
       <CardHeader>
         <CardTitle>Recent Activity</CardTitle>
       </CardHeader>
@@ -590,6 +590,7 @@ export default function DashboardPage() {
 
           {/* Emergency card button */}
           <Button
+            data-tour="emergency-qr"
             variant="outline"
             onClick={openQrDialog}
             className="w-full rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"

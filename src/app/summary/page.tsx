@@ -214,7 +214,7 @@ export default function SummaryPage() {
             </div>
 
             {/* Weekly Overview card */}
-            <Card className="rounded-2xl border-[#8b5cf6]/10 shadow-sm shadow-[#8b5cf6]/5">
+            <Card data-tour="summary-card" className="rounded-2xl border-[#8b5cf6]/10 shadow-sm shadow-[#8b5cf6]/5">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles size={20} className="text-[#8b5cf6]" />
@@ -234,7 +234,7 @@ export default function SummaryPage() {
 
             {/* Watch For card */}
             {summary.watchFor && (
-              <Card className="rounded-2xl border-[#f59e0b]/20 shadow-sm shadow-[#f59e0b]/5">
+              <Card data-tour="watch-for" className="rounded-2xl border-[#f59e0b]/20 shadow-sm shadow-[#f59e0b]/5">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-[#92400e]">
                     <AlertCircle size={20} className="text-[#f59e0b]" />
@@ -256,7 +256,7 @@ export default function SummaryPage() {
 
             {/* Action Items card */}
             {summary.actionItems && (
-              <Card className="rounded-2xl border-[#10b981]/20 shadow-sm shadow-[#10b981]/5">
+              <Card data-tour="action-items" className="rounded-2xl border-[#10b981]/20 shadow-sm shadow-[#10b981]/5">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-[#065f46]">
                     <CheckCircle2 size={20} className="text-[#10b981]" />
@@ -305,7 +305,7 @@ export default function SummaryPage() {
 
           {/* Sidebar — Language selector */}
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <Card className="rounded-2xl border-gray-200 shadow-sm">
+            <Card data-tour="summary-translate" className="rounded-2xl border-gray-200 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Translate Summary</CardTitle>
               </CardHeader>

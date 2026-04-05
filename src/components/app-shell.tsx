@@ -5,7 +5,7 @@
 
 'use client'
 
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useUser } from '@/lib/user-context'
@@ -21,6 +21,7 @@ import {
   X,
   Heart,
 } from 'lucide-react'
+import { TourButton } from '@/components/tour-button'
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: Home },
@@ -45,7 +46,7 @@ function nameToColor(name: string) {
   return palettes[Math.abs(hash) % palettes.length]
 }
 
-function greeting() {
+function getGreeting() {
   const h = new Date().getHours()
   if (h < 12) return 'Good morning'
   if (h < 17) return 'Good afternoon'
@@ -57,6 +58,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter()
   const { user, setUser } = useUser()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [greeting, setGreeting] = useState('Welcome')
+
+  useEffect(() => {
+    setGreeting(getGreeting())
+  }, [])
 
   // Public routes — no shell chrome
   const isPublic =
@@ -87,11 +93,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             {/* Greeting */}
             <h2 className="text-base sm:text-lg font-medium text-zinc-800">
-              {user ? `${greeting()}, ${user.name.split(' ')[0]}` : 'CareCircle'}
+              {user ? `${greeting}, ${user.name.split(' ')[0]}` : 'CareCircle'}
             </h2>
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4">
+            {/* Tour button */}
+            <TourButton />
+
             {/* Switch user */}
             <button
               onClick={() => { setUser(null); router.push('/select') }}

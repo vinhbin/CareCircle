@@ -294,6 +294,7 @@ export default function NotesPage() {
           <p className="text-[#64748b]">Keep track of medical appointments and doctor notes</p>
         </div>
         <Button
+          data-tour="add-note"
           onClick={() => setDialogOpen(true)}
           className="rounded-xl bg-[#f43f5e] hover:bg-[#f43f5e]/90 hidden sm:flex"
         >
@@ -346,7 +347,7 @@ export default function NotesPage() {
           {notes.map((note) => {
             const isExpanded = !!expandedNotes[note.id]
             return (
-              <Card key={note.id} className="rounded-2xl border-gray-200 shadow-sm hover:shadow-md transition-all">
+              <Card key={note.id} data-tour={note.id === notes[0]?.id ? "note-cards" : undefined} className="rounded-2xl border-gray-200 shadow-sm hover:shadow-md transition-all">
                 <CardContent className="p-6">
                   {/* Header row */}
                   <div className="flex items-start justify-between mb-4">
@@ -381,7 +382,7 @@ export default function NotesPage() {
                   {isExpanded && (
                     <div className="space-y-4 mt-6 pt-6 border-t border-gray-200">
                       {/* Language selector buttons */}
-                      <div>
+                      <div data-tour="language-selector">
                         <Label className="mb-3 block">Translate to:</Label>
                         <div className="flex flex-wrap gap-2">
                           {LANGUAGES.map((lang) => (
@@ -403,6 +404,7 @@ export default function NotesPage() {
 
                       {/* Translate button */}
                       <Button
+                        data-tour="translate-btn"
                         onClick={() => handleTranslate(note.id)}
                         disabled={loading[note.id]}
                         className="rounded-xl bg-[#8b5cf6] hover:bg-[#8b5cf6]/90"

@@ -207,6 +207,7 @@ export default function DocumentsPage() {
           <p className="text-[#64748b]">Organize and access all medical documents</p>
         </div>
         <Button
+          data-tour="upload-btn"
           onClick={() => setUploadOpen(true)}
           className="rounded-xl bg-[#f43f5e] hover:bg-[#f43f5e]/90 hidden sm:flex"
         >
@@ -266,7 +267,7 @@ export default function DocumentsPage() {
 
       {/* ─── FOLDERS VIEW ─── */}
       {!initialLoading && !openFolder && Object.keys(folders).length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div data-tour="folder-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {Object.entries(folders).map(([category, docs]) => {
             const style = getCategoryStyle(category)
             const Icon = style.icon
@@ -400,7 +401,7 @@ export default function DocumentsPage() {
             )}
 
             {/* AI classification info */}
-            <div className="bg-[#ede9fe] rounded-xl p-4 flex items-start gap-3">
+            <div data-tour="ai-classify" className="bg-[#ede9fe] rounded-xl p-4 flex items-start gap-3">
               <Sparkles className="text-[#8b5cf6] mt-0.5" size={20} />
               <div className="flex-1">
                 <p className="text-sm font-medium text-[#0f172a] mb-1">

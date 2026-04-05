@@ -200,7 +200,7 @@ export default function CommunityPage() {
       </div>
 
       {/* Search */}
-      <div className="mb-6">
+      <div data-tour="search-bar" className="mb-6">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748b]" size={20} />
           <Input
@@ -214,7 +214,7 @@ export default function CommunityPage() {
       </div>
 
       {/* Category tabs */}
-      <div className="mb-8">
+      <div data-tour="category-tabs" className="mb-8">
         <div className="flex gap-1 overflow-x-auto rounded-xl bg-[#f8fafc] p-1">
           {categories.map((category) => (
             <button
@@ -233,7 +233,7 @@ export default function CommunityPage() {
       </div>
 
       {/* Resources grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div data-tour="resource-cards" className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredResources.map((resource) => (
           <Card key={resource.id} className="rounded-2xl border-gray-200 shadow-sm hover:shadow-md transition-all">
             <CardContent className="p-6">
@@ -309,7 +309,7 @@ export default function CommunityPage() {
       )}
 
       {/* Know Your Rights callout — preserved from original */}
-      <div className="mt-8 bg-white rounded-2xl border border-[#f59e0b]/30 shadow-sm overflow-hidden">
+      <div data-tour="know-your-rights" className="mt-8 bg-white rounded-2xl border border-[#f59e0b]/30 shadow-sm overflow-hidden">
         <div className="h-1 bg-gradient-to-r from-[#f59e0b] via-[#fbbf24] to-[#f59e0b]" />
         <div className="p-6 flex gap-4">
           <div className="size-10 rounded-xl bg-[#fef3c7] flex items-center justify-center shrink-0">
