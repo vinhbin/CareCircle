@@ -56,13 +56,6 @@ function nameToColor(name: string) {
   return palettes[Math.abs(hash) % palettes.length]
 }
 
-function greeting() {
-  const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 17) return 'Good afternoon'
-  return 'Good evening'
-}
-
 /* ─── PatientCard ─── */
 function PatientCard({ patient }: { patient: Patient }) {
   return (
@@ -571,16 +564,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      {/* Personalized greeting */}
-      <div className="flex items-start justify-between animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-zinc-800 tracking-tight">
-            {greeting()}, {user.name.split(' ')[0]}
-          </h1>
-          <p className="text-sm text-zinc-400 mt-0.5">
-            {patient ? `Caring for ${patient.name}` : 'Loading...'}
-          </p>
-        </div>
+      {/* Page header with Emergency Card action */}
+      <div className="flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <h1 className="text-2xl lg:text-3xl font-bold text-zinc-800 tracking-tight">Dashboard</h1>
         <Button
           variant="outline"
           size="sm"

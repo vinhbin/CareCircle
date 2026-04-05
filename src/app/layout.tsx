@@ -1,12 +1,12 @@
-// ROOT LAYOUT — wraps all pages with UserProvider (context) and Nav
-// Server component — metadata lives here, client logic in Nav and UserProvider
+// ROOT LAYOUT — wraps all pages with UserProvider (context) and AppShell
+// Server component — metadata lives here, client logic in AppShell and UserProvider
 
 import type { Metadata } from 'next'
 import './globals.css'
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { UserProvider } from '@/lib/user-context'
-import { Nav } from '@/components/nav'
+import { AppShell } from '@/components/app-shell'
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -18,10 +18,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={cn("h-full", "font-sans", geist.variable)}>
-      <body className="min-h-full flex flex-col bg-rose-50">
+      <body className="min-h-full flex flex-col">
         <UserProvider>
-          <Nav />
-          <main className="flex-1 px-4 sm:px-6 lg:px-10 xl:px-16 py-8 w-full">{children}</main>
+          <AppShell>{children}</AppShell>
         </UserProvider>
       </body>
     </html>

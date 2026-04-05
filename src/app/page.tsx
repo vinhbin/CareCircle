@@ -6,7 +6,7 @@ import Link from 'next/link'
 
 export default function LandingPage() {
   return (
-    <div className="-mx-6 -mt-8">
+    <div>
       {/* ── Hero ── */}
       <section className="relative overflow-hidden px-6 pt-20 pb-24">
         {/* Warm radial glow */}
