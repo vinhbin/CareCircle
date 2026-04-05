@@ -19,8 +19,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Phone, Stethoscope, HeartPulse, Plus, Pencil, Trash2,
-  CheckCircle2, Circle, Clock, CalendarDays, Pill
+  CheckCircle2, Circle, Clock, CalendarDays, Pill, QrCode
 } from 'lucide-react'
+import QRCode from 'qrcode'
 
 type Patient = {
   name: string; age: number; diagnosis: string
@@ -529,6 +530,15 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [activeMedCount, setActiveMedCount] = useState(0)
   const [activity, setActivity] = useState<ActivityEntry[]>([])
+  const [qrOpen, setQrOpen] = useState(false)
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
+
+  async function openQrDialog() {
+    const url = `${window.location.origin}/emergency/ba-lan`
+    const dataUrl = await QRCode.toDataURL(url, { width: 280, margin: 2 })
+    setQrDataUrl(dataUrl)
+    setQrOpen(true)
+  }
 
   useEffect(() => {
     if (!user) router.replace('/')
@@ -562,13 +572,24 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 lg:space-y-8">
       {/* Personalized greeting */}
-      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <h1 className="text-2xl lg:text-3xl font-bold text-zinc-800 tracking-tight">
-          {greeting()}, {user.name.split(' ')[0]}
-        </h1>
-        <p className="text-sm text-zinc-400 mt-0.5">
-          {patient ? `Caring for ${patient.name}` : 'Loading...'}
-        </p>
+      <div className="flex items-start justify-between animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-zinc-800 tracking-tight">
+            {greeting()}, {user.name.split(' ')[0]}
+          </h1>
+          <p className="text-sm text-zinc-400 mt-0.5">
+            {patient ? `Caring for ${patient.name}` : 'Loading...'}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={openQrDialog}
+          className="shrink-0 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 shadow-sm"
+        >
+          <QrCode className="w-4 h-4 mr-1.5" />
+          Emergency Card
+        </Button>
       </div>
 
       {/* Desktop: 3-column grid with wider main area. Mobile: single stack */}
@@ -592,6 +613,30 @@ export default function DashboardPage() {
           <ActivityFeed activity={activity} />
         </div>
       </div>
+
+      {/* Emergency QR Card Dialog */}
+      <Dialog open={qrOpen} onOpenChange={setQrOpen}>
+        <DialogContent className="sm:max-w-xs text-center">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Emergency QR Card</DialogTitle>
+            <DialogDescription>
+              Scan this code to view {patient?.name ?? "the patient"}&apos;s emergency medical info.
+            </DialogDescription>
+          </DialogHeader>
+          {qrDataUrl && (
+            <div className="flex flex-col items-center gap-4 py-2">
+              <img src={qrDataUrl} alt="Emergency QR Code" className="w-56 h-56 rounded-lg border border-zinc-200" />
+              <a
+                href="/emergency/ba-lan"
+                target="_blank"
+                className="text-sm text-rose-600 font-medium hover:underline"
+              >
+                Open emergency card &rarr;
+              </a>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
