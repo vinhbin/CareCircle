@@ -82,7 +82,7 @@
 | Doc comments | ✅ Done | All API routes, lib files, pages, and nav have doc comments |
 | Color theme | ✅ Done | "Soft Sanctuary" — rose palette, warm shadows, gradient accents, name-derived avatar colors |
 | Responsive layout | ✅ Done | Full-width desktop (no max-w), responsive padding, sticky sidebar, mobile card fallbacks |
-| Loading states | 🔲 TODO | Skeletons, spinners |
+| Loading states | ✅ Done | Skeletons on notes + summary pages, spinners on translate/generate buttons |
 | Vercel deploy | 🔲 TODO | Push to GitHub, add env vars |
 
 ---
@@ -96,12 +96,12 @@
 
 ---
 
-## Frontend — Person B
+## Frontend — Person B — COMPLETE ✅
 
 | Page | Route | Status | Notes |
 |---|---|---|---|
-| Doctor Notes | `/notes` | 🔲 Partial | Translate works. Build: NoteCard styling, TranslationPanel, **"Add Note" dialog with Manual + Scan Photo tabs** |
-| AI Weekly Summary | `/summary` | 🔲 Partial | Generate works. Build: SummaryCard, WeekBadge, EmptyState, **language selector + translate** |
+| Doctor Notes | `/notes` | ✅ Done | NoteCards (doctor, specialty badge, date), TranslationPanel (rose/amber gradient, action items), **Add Note dialog (Manual + Scan Photo tabs with Gemini OCR)**, language selector bar, loading skeletons, empty state |
+| AI Weekly Summary | `/summary` | ✅ Done | SummaryCard (narrative + Watch For + Action Items), WeekBadge, EmptyState, generating skeleton, **language selector sidebar + Translate button → violet translation panel**, desktop grid layout with sticky sidebar |
 
 ---
 
@@ -110,10 +110,10 @@
 ### V1 Checklist
 - [x] Dashboard loads patient card + 3 family avatars + task list
 - [x] Medication tracker shows 4 active meds with real dosages
-- [ ] Doctor notes feed shows 3 notes with visible jargon
-- [ ] "Explain in Tiếng Việt" → real Vietnamese translation in <8s
-- [ ] Language selector switches between 10 languages
-- [ ] "Generate This Week's Summary" → narrative summary appears
+- [x] Doctor notes feed shows 3 notes with visible jargon
+- [x] "Explain in Tiếng Việt" → real Vietnamese translation in <8s
+- [x] Language selector switches between 10 languages
+- [x] "Generate This Week's Summary" → narrative summary appears
 - [ ] Community resources page loads with Atlanta-area resources
 - [ ] All pages load error-free at 1440px
 - [ ] Deployed Vercel URL works end-to-end
@@ -125,7 +125,7 @@
 - [x] Task CRUD: create, edit, toggle complete, delete
 - [x] Medication checklist with live dose counts (2/2 ✓) + overdose warning
 - [x] "Confirm Given" on medication → logs who + when
-- [ ] Photo scan: upload image → text extracted by Gemini
-- [ ] Add Note from scan → note appears, ready to translate
-- [ ] Summary translatable to Vietnamese/Spanish/etc.
+- [x] Photo scan: upload image → text extracted by Gemini
+- [x] Add Note from scan → note appears, ready to translate
+- [x] Summary translatable to Vietnamese/Spanish/etc.
 - [x] Activity feed shows attributed actions on dashboard (timeline style with color-coded dots)
