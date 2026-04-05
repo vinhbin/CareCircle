@@ -4,6 +4,7 @@
 
 import Link from 'next/link'
 import HeroCarousel from '@/components/HeroCarousel'
+import DonationSection from '@/components/DonationSection'
 
 export default function LandingPage() {
   return (
@@ -248,6 +249,9 @@ export default function LandingPage() {
           </Link>
         </div>
       </section>
+
+      {/* ── Donation ── */}
+      <DonationSection />
     </div>
   )
 }
