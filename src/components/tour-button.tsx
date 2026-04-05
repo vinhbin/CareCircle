@@ -8,10 +8,10 @@ import { tourSteps } from '@/lib/tour'
 
 export function TourButton() {
   const pathname = usePathname()
-  const steps = tourSteps[pathname]
+  const tourDef = tourSteps[pathname]
 
   const startTour = useCallback(async () => {
-    if (!steps || steps.length === 0) return
+    if (!tourDef) return
 
     const { driver } = await import('driver.js')
     await import('driver.js/dist/driver.css')
@@ -29,13 +29,16 @@ export function TourButton() {
       prevBtnText: 'Back',
       doneBtnText: 'Done',
       progressText: '{{current}} of {{total}}',
-      steps,
     })
 
-    driverObj.drive()
-  }, [steps])
+    const steps = typeof tourDef === 'function' ? tourDef(driverObj) : tourDef
+    if (steps.length === 0) return
 
-  if (!steps || steps.length === 0) return null
+    driverObj.setSteps(steps)
+    driverObj.drive()
+  }, [tourDef])
+
+  if (!tourDef) return null
 
   return (
     <Button

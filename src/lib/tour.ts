@@ -1,6 +1,8 @@
-import type { DriveStep } from 'driver.js'
+import type { DriveStep, Driver } from 'driver.js'
 
-export const tourSteps: Record<string, DriveStep[]> = {
+export type TourDef = DriveStep[] | ((driverObj: Driver) => DriveStep[])
+
+export const tourSteps: Record<string, TourDef> = {
   '/dashboard': [
     {
       element: '[data-tour="patient-card"]',
@@ -192,6 +194,59 @@ export const tourSteps: Record<string, DriveStep[]> = {
         description: 'Upload any medical document. AI automatically classifies it and generates a description.',
         side: 'bottom',
         align: 'end',
+      },
+    },
+  ],
+
+  '/circles': (driverObj) => [
+    {
+      element: '[data-tour="circle-cards"]',
+      popover: {
+        title: 'Support Circles',
+        description: 'Peer support groups organized by diagnosis. Connect with patients who share your condition.',
+        side: 'bottom',
+        align: 'start',
+      },
+    },
+    {
+      element: '[data-tour="circle-callout"]',
+      popover: {
+        title: 'Auto-Translation',
+        description: 'Every post is automatically shown in your language. A question in Vietnamese, an answer in Spanish — everyone reads in their own language.',
+        side: 'top',
+        align: 'start',
+        onNextClick: () => {
+          const btn = document.querySelector('[data-tour="diabetes-circle"]') as HTMLElement
+          btn?.click()
+          setTimeout(() => driverObj.moveNext(), 300)
+        },
+      },
+    },
+    {
+      element: '[data-tour="circle-header"]',
+      popover: {
+        title: 'Circle Overview',
+        description: 'See member count and all languages represented in the circle.',
+        side: 'bottom',
+        align: 'start',
+      },
+    },
+    {
+      element: '[data-tour="circle-questions"]',
+      popover: {
+        title: 'Patient Q&A',
+        description: 'Real questions from real patients. Each post shows the original language — all auto-translated so everyone can read.',
+        side: 'top',
+        align: 'start',
+      },
+    },
+    {
+      element: '[data-tour="circle-ask"]',
+      popover: {
+        title: 'Ask a Question',
+        description: 'Share your experience or ask for advice. Your post will be translated for everyone in the circle.',
+        side: 'top',
+        align: 'start',
       },
     },
   ],

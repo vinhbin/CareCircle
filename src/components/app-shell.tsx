@@ -16,6 +16,7 @@ import {
   FileText,
   Sparkles,
   FolderOpen,
+  MessageCircle,
   Users,
   Menu,
   X,
@@ -29,6 +30,7 @@ const navItems = [
   { path: '/notes', label: 'Doctor Notes', icon: FileText },
   { path: '/summary', label: 'Weekly Summary', icon: Sparkles },
   { path: '/documents', label: 'Documents', icon: FolderOpen },
+  { path: '/circles', label: 'Circles', icon: MessageCircle },
   { path: '/community', label: 'Community', icon: Users },
 ]
 
