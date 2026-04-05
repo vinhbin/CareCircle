@@ -12,6 +12,14 @@ const images = [
     src: '/hero-family-2.jpg',
     alt: 'Multi-generational family together outdoors',
   },
+  {
+    src: '/patient1.webp',
+    alt: 'Patient getting blood pressure checked by doctor',
+  },
+  {
+    src: '/patient2.webp',
+    alt: 'Doctor comforting a patient during a visit',
+  },
 ]
 
 export default function HeroCarousel() {
